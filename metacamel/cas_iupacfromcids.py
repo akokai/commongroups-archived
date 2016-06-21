@@ -1,4 +1,6 @@
-# Assume a big python list of CIDS. instance of gernerator will iterate over the list and produce the synonyms.
+import pubchempy as pcp
+import re
+
 
 def cas_iupac_from_cid(cid):
 	# Takes a cid (integer or string) and returns dictionary of casrn (empty string if None) and
