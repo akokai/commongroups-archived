@@ -21,7 +21,10 @@ def casrn_iupac_from_cids(cids):
         # most commonly used one. For example, see:
         # https://{pubchem}/rest/pug_view/data/compound/2244/JSON?heading=CAS
         # For now, join up all the synonyms in to one long string:
-        synonyms = ' '.join(pcp.get_synonyms(cid)[0]['Synonym'])
+        try:
+            synonyms = ' '.join(pcp.get_synonyms(cid)[0]['Synonym'])
+        except IndexError:  # If there are no synonyms in PubChem...
+            synonyms = ''
         sleep(0.5)  # Not sure how much sleep we actually need.
         # Leave the regexing to another function, which is very thorough
         # and also makes sure the CASRNs are numerically valid:
