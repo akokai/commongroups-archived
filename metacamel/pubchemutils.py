@@ -14,24 +14,18 @@ def casrn_iupac_from_cids(cids):
     Uses PubChem API. CIDs can be an iterable of ints or strings.
     '''
     for cid in cids:
-        iupac_name = pcp.Compound.from_cid(cid).iupac_name
+        cpd = pcp.Compound.from_cid(cid)
         sleep(0.5)  # Sleep to prevent overloading API.
         # There might be a more robust way to find a list of CASRNs
         # and to process it in a more sophisticated way, e.g. find the
         # most commonly used one. For example, see:
         # https://{pubchem}/rest/pug_view/data/compound/2244/JSON?heading=CAS
-        # For now, join up all the synonyms in to one long string:
+        # For now, join up all the synonyms in to one long string
+        # and use regex to find valid CASRNs. Use the first one found.
         try:
-            synonyms = ' '.join(pcp.get_synonyms(cid)[0]['Synonym'])
-        except IndexError:  # If there are no synonyms in PubChem...
-            synonyms = ''
-        sleep(0.5)  # Not sure how much sleep we actually need.
-        # Leave the regexing to another function, which is very thorough
-        # and also makes sure the CASRNs are numerically valid:
-        casrns = find_valid(synonyms)
-        if casrns:
-            casrn = casrns[0]
-        else:
+            casrn = find_valid(' '.join(cpd.synonyms))[0]
+        except IndexError:
+            # If there are no synonyms, or there are no CASRNs found:
             casrn = None
-        results = {'CID': cid, 'CASRN': casrn, 'IUPAC_name': iupac_name}
+        results = {'CID': cid, 'CASRN': casrn, 'IUPAC_name': cpd.iupac_name}
         yield results
