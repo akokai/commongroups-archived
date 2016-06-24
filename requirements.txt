@@ -1,5 +1,6 @@
 appnope==0.1.0
 backports.shutil-get-terminal-size==1.0.0
+boltons==16.4.1
 decorator==4.0.10
 future==0.15.2
 ipython==4.2.0

@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 '''Unit tests for PubChem API usage.'''
 
-import metacamel.pubchemutils as pc
+import sys
 from itertools import islice
+sys.path.append('metacamel')
+
+from metacamel import pubchemutils as pc
 
 
 def test_find_pubchem_casrns():
