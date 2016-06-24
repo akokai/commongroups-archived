@@ -6,13 +6,14 @@ from __future__ import unicode_literals
 import os
 import logging
 from time import sleep
-from builtins import str
+from urllib.parse import quote
 
 import requests
 import pubchempy as pcp
 import logging_conf
 from casrnutils import find_valid
 from boltons.fileutils import mkdir_p
+from builtins import str
 
 _CUR_PATH = os.path.dirname(os.path.abspath(__file__))
 _PARENT_PATH = os.path.dirname(_CUR_PATH)
@@ -56,7 +57,8 @@ def init_substructure_search(struct, method='smiles'):
 
     Returns the listkey given by the server response.
     '''
-    search_path = 'compound/substructure/{0}/{1}/JSON'.format(method, struct)
+    search_path = 'compound/substructure/{0}/{1}/JSON'.format(method,
+                                                              quote(struct))
     search_uri = PUG_BASE + search_path
     logger.info('Substructure search request URI: %s' % search_uri)
     search_req = requests.get(search_uri)
@@ -93,7 +95,7 @@ def substructure_search(struct, method='smiles', wait=180):
     Find compounds in PubChem matching a substructure.
     '''
     listkey = init_substructure_search(struct, method)
-    logger.info('Waiting %i s before collecting PubChem API response.' % wait)
+    logger.info('Waiting %i s before retrieving search results.' % wait)
     sleep(wait)
     cids = retrieve_search_results(listkey)
     return cids
