@@ -42,6 +42,11 @@ config = {
             'handlers': ['console', 'file'],
             'propagate': False
         },
+        'metacamel.group': {
+            'level': 'DEBUG',
+            'handlers': ['console', 'file'],
+            'propagate': False
+        },
         'metacamel.pubchemutils': {
             'level': 'DEBUG',
             'handlers': ['console', 'file'],

@@ -3,7 +3,6 @@
 
 from __future__ import unicode_literals
 
-import os
 import logging
 from time import sleep
 from urllib.parse import quote
@@ -15,15 +14,10 @@ from casrnutils import find_valid
 from boltons.fileutils import mkdir_p
 from builtins import str
 
-_CUR_PATH = os.path.dirname(os.path.abspath(__file__))
-_PARENT_PATH = os.path.dirname(_CUR_PATH)
-DATA_PATH = os.path.join(_PARENT_PATH, 'data')
-mkdir_p(DATA_PATH)
-TMP_LISTKEY_PATH = os.path.join(DATA_PATH, 'listkeys.txt')
-
 logger = logging.getLogger('metacamel.pubchemutils')
 
-PUG_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/'
+PUG_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug'
+PUG_VIEW_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug_view'
 
 
 def casrn_iupac_from_cids(cids):
@@ -36,18 +30,17 @@ def casrn_iupac_from_cids(cids):
         cpd = pcp.Compound.from_cid(cid)
         sleep(0.5)  # Sleep to prevent overloading API.
         # There might be a more robust way to find a list of CASRNs
-        # and to process it in a more sophisticated way, e.g. find the
-        # most commonly used one. For example, see:
-        # https://{pubchem}/rest/pug_view/data/compound/2244/JSON?heading=CAS
+        # and to process it in a more sophisticated way. For example, see:
+        # {PUG_VIEW_BASE}/data/compound/2244/JSON?heading=CAS
         # For now, join up all the synonyms in to one long string
-        # and use regex to find valid CASRNs. Use the first one found.
+        # and use regex to find valid CASRNs; return them all as a string.
         try:
-            casrn = find_valid(' '.join(cpd.synonyms))[0]
+            casrns = ' '.join(find_valid(' '.join(cpd.synonyms)))
         except IndexError:
             # If there are no synonyms, or there are no CASRNs found:
             logger.info('No CASRNs found for CID %s' % cid)
-            casrn = None
-        results = {'CID': cid, 'CASRN': casrn, 'IUPAC_name': cpd.iupac_name}
+            casrns = None
+        results = {'CID': cid, 'CASRN_list': casrns, 'IUPAC_name': cpd.iupac_name}
         yield results
 
 
@@ -57,8 +50,8 @@ def init_substructure_search(struct, method='smiles'):
 
     Returns the listkey given by the server response.
     '''
-    search_path = 'compound/substructure/{0}/{1}/JSON'.format(method,
-                                                              quote(struct))
+    search_path = '/compound/substructure/{0}/{1}/JSON'.format(method,
+                                                               quote(struct))
     search_uri = PUG_BASE + search_path
     logger.info('Substructure search request URI: %s' % search_uri)
     search_req = requests.get(search_uri)
@@ -76,11 +69,15 @@ def retrieve_search_results(listkey):
     '''
     Retrieve search results from the PubChem API using the given ListKey.
     '''
-    key_uri = PUG_BASE + 'compound/listkey/{0}/cids/JSON'.format(listkey)
-    logger.info('Listkey retrieval request URI: %s' % key_uri)
+    key_uri = PUG_BASE + '/compound/listkey/{0}/cids/JSON'.format(listkey)
+    logger.info('ListKey retrieval request URI: %s' % key_uri)
     key_req = requests.get(key_uri)
-    logger.debug('Listkey retrieval request status: %s' %
+    logger.debug('ListKey retrieval request status: %s' %
                  key_req.status_code)
+    while key_req.status_code == 202:
+        logger.info('Server not ready. Waiting additional 10 s.')
+        sleep(10)
+        key_req = requests.get(key_uri)
     try:
         cids = key_req.json()['IdentifierList']['CID']
         logger.info('Substructure search returned %i results' % len(cids))
@@ -90,7 +87,7 @@ def retrieve_search_results(listkey):
         return None
 
 
-def substructure_search(struct, method='smiles', wait=180):
+def substructure_search(struct, method='smiles', wait=10):
     '''
     Find compounds in PubChem matching a substructure.
     '''

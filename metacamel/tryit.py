@@ -12,7 +12,7 @@ def try_casrn_from_cids():
 
 
 def try_substructure_search():
-    results = pc.substructure_search('[CH3][Hg]')
+    results = pc.substructure_search('[CH3][Hg]', wait=1)
     print(results)
 
 
