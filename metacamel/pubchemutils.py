@@ -10,8 +10,9 @@ from urllib.parse import quote
 import requests
 import pubchempy as pcp
 import logging_conf
-from casrnutils import find_valid
-from boltons.fileutils import mkdir_p
+from casrnutils import validate, find_valid
+from boltons.setutils import IndexedSet
+from boltons.iterutils import remap
 from builtins import str
 
 logger = logging.getLogger('metacamel.pubchemutils')
@@ -20,31 +21,70 @@ PUG_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug'
 PUG_VIEW_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug_view'
 
 
-def casrn_iupac_from_cids(cids):
+def get_known_casrns(cid):
     '''
-    Generate dicts of corresponding CASRNs and IUPAC names for a list of CIDs.
+    Get PubChem-designated CASRNs for a given CID and return an IndexedSet.
 
-    Uses PubChem API. CIDs can be an iterable of ints or strings.
+    This method may need to change as PubChem improves access to CASRNs.
+    '''
+    uri = PUG_VIEW_BASE + '/data/compound/{0}/JSON?heading=CAS'.format(cid)
+    logger.debug('Getting known CASRNs for CID %s. Request URI: %s', cid, uri)
+    casrn_req = requests.get(uri)
+    data = casrn_req.json()
+    casrns = IndexedSet()
+
+    def visit(path, key, value):
+        if value['Name'] == 'CAS':
+            if validate(value['StringValue'], boolean=True):
+                casrns.add(value['StringValue'])
+            else:
+                logger.debug('Found invalid CASRN [%s] for CID %s',
+                             value['StringValue'], cid)
+        return False
+
+    try:
+        remap(data, visit=visit, reraise_visit=False)
+    except LookupError:
+        logger.error('Failed to retrieve known CASRNs for CID %s.' % cid)
+
+    logger.info('Found %i known CASRNs for CID %s', len(casrns), cid)
+    return casrns
+
+
+def details_from_cids(cids):
+    '''
+    Generate dicts of information retrieved from PubChem for a list of CIDs.
+
+    Uses the PubChem API. CIDs can be an iterable of ints or strings.
+    Retrieves CASRNs, IUPAC names... TO DO: date added to PubChem!
+    CASRNs are returned as a space-separated string with the 'best' one first.
     '''
     for cid in cids:
+        casrns = get_known_casrns(cid)  # Instantiates an IndexedSet.
+        sleep(0.2)  # Try to limit to about 5 REST API requests per second.
+
         cpd = pcp.Compound.from_cid(cid)
-        sleep(0.5)  # Sleep to prevent overloading API.
-        # There might be a more robust way to find a list of CASRNs
-        # and to process it in a more sophisticated way. For example, see:
-        # {PUG_VIEW_BASE}/data/compound/2244/JSON?heading=CAS
-        # For now, join up all the synonyms in to one long string
-        # and use regex to find valid CASRNs; return them all as a string.
+        sleep(0.2)
+
         try:
-            casrns = ' '.join(find_valid(' '.join(cpd.synonyms)))
+            # This seems to involve another API request:
+            cas_synonyms = find_valid(' '.join(cpd.synonyms))
+            logger.info('Found %i CASRNs in synonyms for CID %s',
+                        len(cas_synonyms), cid)
+            casrns.update(cas_synonyms)
         except IndexError:
-            # If there are no synonyms, or there are no CASRNs found:
-            logger.info('No CASRNs found for CID %s' % cid)
-            casrns = None
-        results = {'CID': cid, 'CASRN_list': casrns, 'IUPAC_name': cpd.iupac_name}
+            logger.info('No CASRNs found in synonyms for CID %s' % cid)
+
+        # Convert the IndexedSet into a string: if any 'known' CASRNs were
+        # found, those will come first.
+        casrns_string = ' '.join(casrns)
+        results = {'CID': cid, 'CASRN_list': casrns_string,
+                   'IUPAC_name': cpd.iupac_name}
+        sleep(0.2)
         yield results
 
 
-def init_substructure_search(struct, method='smiles'):
+def init_substruct_search(struct, method='smiles'):
     '''
     Initiate an asynchronous substructure search using the PubChem API.
 
@@ -53,15 +93,17 @@ def init_substructure_search(struct, method='smiles'):
     search_path = '/compound/substructure/{0}/{1}/JSON'.format(method,
                                                                quote(struct))
     search_uri = PUG_BASE + search_path
-    logger.info('Substructure search request URI: %s' % search_uri)
+    logger.debug('Substructure search request URI: %s' % search_uri)
     search_req = requests.get(search_uri)
+
     if search_req.status_code != 202:
         logger.error('Unexpected request status: %s' % search_req.status_code)
         logger.error('Stopping attempted substructure search.')
-        return None
-        # There may be something more useful to do here.
-    logger.debug('Search request status: %s' % search_req.status_code)
+        return None     # There may be something more useful to do here.
+
     listkey = str(search_req.json()['Waiting']['ListKey'])
+    logger.debug('Search request status: %s; ListKey: %s',
+                 search_req.status_code, listkey)
     return listkey
 
 
@@ -70,29 +112,31 @@ def retrieve_search_results(listkey):
     Retrieve search results from the PubChem API using the given ListKey.
     '''
     key_uri = PUG_BASE + '/compound/listkey/{0}/cids/JSON'.format(listkey)
-    logger.info('ListKey retrieval request URI: %s' % key_uri)
+    logger.debug('ListKey retrieval request URI: %s' % key_uri)
     key_req = requests.get(key_uri)
     logger.debug('ListKey retrieval request status: %s' %
                  key_req.status_code)
+
     while key_req.status_code == 202:
-        logger.info('Server not ready. Waiting additional 10 s.')
+        logger.debug('Server not ready. Waiting additional 10 s.')
         sleep(10)
         key_req = requests.get(key_uri)
+
     try:
         cids = key_req.json()['IdentifierList']['CID']
-        logger.info('Substructure search returned %i results' % len(cids))
+        logger.info('PubChem search returned %i results' % len(cids))
         return cids
     except IndexError:
         logger.error('No CIDs found in substructure search results.')
         return None
 
 
-def substructure_search(struct, method='smiles', wait=10):
+def substruct_search(struct, method='smiles', wait=10):
     '''
     Find compounds in PubChem matching a substructure.
     '''
-    listkey = init_substructure_search(struct, method)
-    logger.info('Waiting %i s before retrieving search results.' % wait)
+    listkey = init_substruct_search(struct, method)
+    logger.debug('Waiting %i s before retrieving search results.' % wait)
     sleep(wait)
     cids = retrieve_search_results(listkey)
     return cids
