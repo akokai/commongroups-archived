@@ -1,1 +1,0 @@
-{"CMG10006": {"method": "SMILES", "pattern": "C[Pb]", "name": "LEAD COMPOUNDS, ORGANIC", "condition": "substructure"}, "CMG10010": {"method": "SMILES", "pattern": "C[Hg]", "name": "MERCURY COMPOUNDS, ORGANIC", "condition": "substructure"}}
