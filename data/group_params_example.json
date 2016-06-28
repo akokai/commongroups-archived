@@ -1,9 +1,17 @@
 [
   {
+    "materialid": "CMG10513",
+    "name": "Mercury Compounds, Methylmercury",
+    "searchtype": "substructure",
+    "structtype": "smiles",
+    "searchstring": "[CH3][Hg]",
+    "last_updated": "" 
+  },
+  {
     "materialid": "CMG10006",
     "name": "LEAD COMPOUNDS, ORGANIC",
     "searchtype": "substructure",
-    "method": "smiles",
+    "structtype": "smiles",
     "searchstring": "C[Pb]",
     "last_updated": ""
   },
@@ -11,7 +19,7 @@
     "materialid": "CMG10010",
     "name": "MERCURY COMPOUNDS, ORGANIC",
     "searchtype": "substructure",
-    "method": "smiles",
+    "structtype": "smiles",
     "searchstring": "C[Hg]",
     "last_updated": ""
   }
