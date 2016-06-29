@@ -12,8 +12,8 @@ from time import asctime, sleep
 from pandas import DataFrame, ExcelWriter
 from boltons.fileutils import mkdir_p
 
-import metacamel.logging_conf
-from metacamel import pubchemutils as pc
+from . import logconf
+from . import pubchemutils as pc
 
 logger = logging.getLogger('metacamel.group')
 

@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 '''Unit tests for PubChem API usage.'''
 
-import sys
 from itertools import islice
-sys.path.append('metacamel')
 
-from metacamel import pubchemutils as pc
+from .. import pubchemutils as pc
 
 cids_with_cas = [22230, 311, 2244]
 cids_without_cas = [13628823]

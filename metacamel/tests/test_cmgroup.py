@@ -1,18 +1,15 @@
 # -*- coding: utf-8 -*-
 '''Unit tests for CMGroup class.'''
 
-import sys
 import os
 import json
 from itertools import islice
 
-sys.path.append('metacamel')
-_TEST_PATH = os.path.dirname(os.path.abspath(__file__))
-_REPO_PATH = os.path.dirname(os.path.dirname(_TEST_PATH))
-DATA_PATH = os.path.join(_REPO_PATH, 'data')
+from ..cmgroup import CMGroup, batch_group_search
 
-from metacamel import pubchemutils as pc
-from metacamel.group import CMGroup, batch_group_search
+_CUR_PATH = os.path.dirname(os.path.abspath(__file__))
+_PARENT_PATH = os.path.dirname(_CUR_PATH)
+DATA_PATH = os.path.join(os.path.dirname(_PARENT_PATH), 'data')
 
 with open(os.path.join(DATA_PATH, 'group_params_example.json'), 'r') as params:
     params_list = json.load(params)

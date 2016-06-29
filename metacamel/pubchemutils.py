@@ -12,8 +12,8 @@ from boltons.iterutils import remap
 import requests
 import pubchempy as pcp
 
-from metacamel import logging_conf
-from metacamel.casrnutils import validate, find_valid
+from . import logconf
+from .casrnutils import validate, find_valid
 
 logger = logging.getLogger('metacamel.pubchemutils')
 
