@@ -3,6 +3,7 @@ backports.shutil-get-terminal-size==1.0.0
 boltons==16.4.1
 decorator==4.0.10
 future==0.15.2
+gspread==0.3.0
 ipython==4.2.0
 ipython-genutils==0.1.0
 lxml==3.6.0

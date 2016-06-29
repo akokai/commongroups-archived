@@ -42,7 +42,12 @@ config = {
             'handlers': ['console', 'file'],
             'propagate': False
         },
-        'metacamel.group': {
+        'metacamel.googlesheet': {
+            'level': 'DEBUG',
+            'handlers': ['console', 'file'],
+            'propagate': False
+        },
+        'metacamel.cmgroup': {
             'level': 'DEBUG',
             'handlers': ['console', 'file'],
             'propagate': False

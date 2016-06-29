@@ -15,7 +15,7 @@ from boltons.fileutils import mkdir_p
 from . import logconf
 from . import pubchemutils as pc
 
-logger = logging.getLogger('metacamel.group')
+logger = logging.getLogger('metacamel.cmgroup')
 
 _CUR_PATH = os.path.dirname(os.path.abspath(__file__))
 _PARENT_PATH = os.path.dirname(_CUR_PATH)
