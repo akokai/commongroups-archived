@@ -10,6 +10,7 @@ def test_get_spreadsheet():
     sheet = gs.get_spreadsheet()
     assert sheet.sheet1.title == 'new CMGs'
 
-def test_get_CMGs():
-    cmgs = list(islice(gs.get_CMGs('new CMGs'), 2))
+
+def test_get_cmgs():
+    cmgs = list(islice(gs.get_cmgs('new CMGs'), 2))
     assert len(cmgs[0].materialid) == 7

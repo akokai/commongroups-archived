@@ -45,7 +45,7 @@ def get_known_casrns(cid):
     try:
         remap(data, visit=visit, reraise_visit=False)
     except LookupError:
-        logger.error('Failed to retrieve known CASRNs for CID %s.' % cid)
+        logger.error('Failed to retrieve known CASRNs for CID %s.', cid)
 
     logger.info('Found %i known CASRNs for CID %s.', len(casrns), cid)
     return casrns
@@ -73,7 +73,7 @@ def get_compound_info(cids):
                         len(cas_synonyms), cid)
             casrns.update(cas_synonyms)
         except IndexError:
-            logger.info('No CASRNs found in synonyms for CID %s.' % cid)
+            logger.info('No CASRNs found in synonyms for CID %s.', cid)
 
         # Convert the IndexedSet into a string: if any 'known' CASRNs were
         # found, those will come first.
@@ -100,11 +100,11 @@ def init_substruct_search(struct, method='smiles'):
     search_path = '/compound/substructure/{0}/{1}/JSON'.format(method,
                                                                quote(struct))
     search_uri = PUG_BASE + search_path
-    logger.debug('Substructure search request URI: %s' % search_uri)
+    logger.debug('Substructure search request URI: %s', search_uri)
     search_req = requests.get(search_uri)
 
     if search_req.status_code != 202:
-        logger.error('Unexpected request status: %s' % search_req.status_code)
+        logger.error('Unexpected request status: %s', search_req.status_code)
         logger.error('Stopping attempted substructure search.')
         return None     # There may be something more useful to do here.
 
@@ -122,9 +122,9 @@ def retrieve_search_results(listkey, **kwargs):
     listkey_args = filter_listkey_args(**kwargs) if kwargs else None
     if listkey_args:
         key_uri = key_uri + '?' + urlencode(kwargs)
-    logger.debug('ListKey retrieval request URI: %s' % key_uri)
+    logger.debug('ListKey retrieval request URI: %s', key_uri)
     key_req = requests.get(key_uri)
-    logger.debug('ListKey retrieval request status: %s' %
+    logger.debug('ListKey retrieval request status: %s',
                  key_req.status_code)
 
     while key_req.status_code == 202:
@@ -134,7 +134,7 @@ def retrieve_search_results(listkey, **kwargs):
 
     try:
         cids = key_req.json()['IdentifierList']['CID']
-        logger.info('PubChem search returned %i results.' % len(cids))
+        logger.info('PubChem search returned %i results.', len(cids))
         return cids
     except IndexError:
         logger.error('No CIDs found in substructure search results.')
@@ -146,7 +146,7 @@ def substruct_search(struct, method='smiles', wait=10, **kwargs):
     Find compounds in PubChem matching a substructure.
     '''
     listkey = init_substruct_search(struct, method)
-    logger.debug('Waiting %i s before retrieving search results.' % wait)
+    logger.debug('Waiting %i s before retrieving search results.', wait)
     sleep(wait)
     cids = retrieve_search_results(listkey, **kwargs)
     return cids

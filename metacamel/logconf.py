@@ -14,7 +14,7 @@ LOG_PATH = os.path.join(_PARENT_PATH, 'log')
 mkdir_p(LOG_PATH)
 LOG_FILE_PATH = os.path.join(LOG_PATH, 'metacamel.log')
 
-config = {
+CONFIG = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
@@ -69,4 +69,4 @@ config = {
     }
 }
 
-logging.config.dictConfig(config)
+logging.config.dictConfig(CONFIG)
