@@ -166,8 +166,8 @@ class CMGroup:
             else:
                 logger.warning('Sorry, can only do substructure searches in PubChem at this time.')
                 raise NotImplementedError
-        except KeyError as exception:
-            logger.error('Missing parameters: %s', exception)
+        except KeyError:
+            logger.exception('Missing parameters.')
             raise
 
     def retrieve_pubchem_compounds(self, **kwargs):
