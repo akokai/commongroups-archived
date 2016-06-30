@@ -3,7 +3,6 @@
 
 import os
 import json
-from itertools import islice
 
 from ..cmgroup import CMGroup, batch_group_search
 

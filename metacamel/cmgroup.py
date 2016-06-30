@@ -24,7 +24,8 @@ mkdir_p(DATA_PATH)
 RESULTS_PATH = os.path.join(_PARENT_PATH, 'results')
 mkdir_p(RESULTS_PATH)
 
-# These are used for Excel export.
+# These are the expected headings of spreadsheet columns.
+# They are also the column headings used for Excel exports.
 params_keys = ['materialid', 'name', 'searchtype',
                'structtype', 'searchstring', 'last_updated']
 compounds_keys = ['CID', 'CASRN_list', 'IUPAC_name']
@@ -188,7 +189,7 @@ class CMGroup:
         new_compounds = list(islice(pc.get_compound_info(cids), None))
 
         logger.info('Adding %i compounds from PubChem search to group %s.',
-                     len(new_compounds), self.materialid)
+                    len(new_compounds), self.materialid)
         self._compounds.extend(new_compounds)
 
         logger.debug('Clearing ListKey for %s.' % self.materialid)
