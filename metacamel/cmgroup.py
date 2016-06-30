@@ -15,7 +15,7 @@ from boltons.fileutils import mkdir_p
 from . import logconf
 from . import pubchemutils as pc
 
-logger = logging.getLogger('metacamel.group')
+logger = logging.getLogger('metacamel.cmgroup')
 
 _CUR_PATH = os.path.dirname(os.path.abspath(__file__))
 _PARENT_PATH = os.path.dirname(_CUR_PATH)
@@ -24,10 +24,11 @@ mkdir_p(DATA_PATH)
 RESULTS_PATH = os.path.join(_PARENT_PATH, 'results')
 mkdir_p(RESULTS_PATH)
 
-# These are used for Excel export.
-params_keys = ['materialid', 'name', 'searchtype',
+# These are the expected headings of spreadsheet columns.
+# They are also the column headings used for Excel exports.
+PARAMS_KEYS = ['materialid', 'name', 'searchtype',
                'structtype', 'searchstring', 'last_updated']
-compounds_keys = ['CID', 'CASRN_list', 'IUPAC_name']
+COMPOUNDS_KEYS = ['CID', 'CASRN_list', 'IUPAC_name']
 
 
 class CMGroup:
@@ -48,7 +49,7 @@ class CMGroup:
         self._params = params
         self._compounds = []
         self._listkey = None
-        logger.debug('Created %s' % self)
+        logger.debug('Created %s', self)
 
     @property
     def materialid(self):
@@ -137,14 +138,14 @@ class CMGroup:
         Output the list of compounds & parameters to an Excel spreadsheet.
         '''
         params_frame = DataFrame(self._params,
-                                 columns=params_keys, index=[0])
+                                 columns=PARAMS_KEYS, index=[0])
         params_frame.set_index('materialid', inplace=True)
         compounds_frame = DataFrame(self._compounds,
-                                    columns=compounds_keys)
+                                    columns=COMPOUNDS_KEYS)
         if not file_path:
             file_path = os.path.join(RESULTS_PATH,
                                      '{0}.xlsx'.format(self.materialid))
-        logger.info('Writing Excel output to: %s' % file_path)
+        logger.info('Writing Excel output to: %s', file_path)
         with ExcelWriter(file_path) as writer:
             params_frame.to_excel(writer, sheet_name=self.materialid)
             compounds_frame.to_excel(writer, sheet_name='Compounds')
@@ -155,8 +156,8 @@ class CMGroup:
         '''
         try:
             if self.searchtype == 'substructure':
-                logger.debug('Initiating PubChem substructure search for %s.'
-                             % self.materialid)
+                logger.debug('Initiating PubChem substructure search for %s.',
+                             self.materialid)
                 key = pc.init_substruct_search(self.searchstring,
                                                method=self.structtype)
                 logger.debug('Setting ListKey for %s: %s.', key,
@@ -165,8 +166,8 @@ class CMGroup:
             else:
                 logger.warning('Sorry, can only do substructure searches in PubChem at this time.')
                 raise NotImplementedError
-        except KeyError as exception:
-            logger.error('Missing parameters: %s', exception)
+        except KeyError:
+            logger.exception('Missing parameters.')
             raise
 
     def retrieve_pubchem_compounds(self, **kwargs):
@@ -179,19 +180,19 @@ class CMGroup:
             logger.error('No existing ListKey to retrieve search results.')
             return None     # Raise an exception instead?
 
-        logger.debug('Retrieving PubChem search results for %s.'
-                     % self.materialid)
+        logger.debug('Retrieving PubChem search results for %s.',
+                     self.materialid)
         listkey_args = pc.filter_listkey_args(**kwargs) if kwargs else None
         cids = pc.retrieve_search_results(self.listkey, **listkey_args)
 
-        logger.debug('Looking up details for %i CIDs.' % len(cids))
+        logger.debug('Looking up details for %i CIDs.', len(cids))
         new_compounds = list(islice(pc.get_compound_info(cids), None))
 
         logger.info('Adding %i compounds from PubChem search to group %s.',
-                     len(new_compounds), self.materialid)
+                    len(new_compounds), self.materialid)
         self._compounds.extend(new_compounds)
 
-        logger.debug('Clearing ListKey for %s.' % self.materialid)
+        logger.debug('Clearing ListKey for %s.', self.materialid)
         del self.listkey
 
     def pubchem_update(self, wait=10, **kwargs):
@@ -200,7 +201,7 @@ class CMGroup:
         '''
         # TO DO: Consider last_updated...
         self.init_pubchem_search()
-        logger.debug('Waiting %i s before retrieving search results.' % wait)
+        logger.debug('Waiting %i s before retrieving search results.', wait)
         sleep(wait)
         self.retrieve_pubchem_compounds(**kwargs)
 

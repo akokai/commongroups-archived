@@ -5,23 +5,23 @@ from itertools import islice
 
 from .. import pubchemutils as pc
 
-cids_with_cas = [22230, 311, 2244]
-cids_without_cas = [13628823]
+CIDS_WITH_CAS = [22230, 311, 2244]
+CIDS_WITHOUT_CAS = [13628823]
 
 
 def test_get_known_casrns():
-    for cid in cids_with_cas:
+    for cid in CIDS_WITH_CAS:
         casrns = pc.get_known_casrns(cid)
         print('CID: {0}\nKnown CASRNs: {1}'.format(cid, ' '.join(casrns)))
         assert len(casrns) > 0
 
-    for cid in cids_without_cas:
+    for cid in CIDS_WITHOUT_CAS:
         casrns = pc.get_known_casrns(cid)
         assert len(casrns) == 0
 
 
 def test_get_compound_info_casrns():
-    results = list(islice(pc.get_compound_info(cids_with_cas), None))
+    results = list(islice(pc.get_compound_info(CIDS_WITH_CAS), None))
     for result in results:
         assert result['CASRN_list'] != ''
 

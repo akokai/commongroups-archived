@@ -1,3 +1,8 @@
+private/
+results/
+log/
+*.sublime*
+
 # Operating system junk
 .DS_Store
 .DS_Store?
