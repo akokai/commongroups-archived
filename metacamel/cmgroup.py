@@ -40,8 +40,8 @@ class CMGroup:
         '''
         Initialize from a dict containing all parameters of a compound group.
 
-        The dict should contain ``materialid``, ``name``,` `searchtype``,
-        ``structtype``, ``searchstring``, and ``last_updated``. For now...
+        The dict should contain `materialid`, `name`,` `searchtype`,
+        `structtype`, `searchstring`, and `last_updated`. (For now...)
         '''
         if 'materialid' in params:
             self._materialid = params['materialid']
@@ -68,7 +68,7 @@ class CMGroup:
 
     @property
     def materialid(self):
-        '''The alphanumeric ID of the chemical/material group.'''
+        '''The numeric ID of the chemical/material group.'''
         return self._materialid
 
     @property
@@ -82,7 +82,7 @@ class CMGroup:
         '''
         The type of structure-based search used to define this group.
 
-        Currently only ``substructure`` is of any use.
+        Currently only `substructure` is of any use.
         '''
         if 'searchtype' in self._params:
             return self._params['searchtype']
@@ -90,9 +90,9 @@ class CMGroup:
     @property
     def structtype(self):
         '''
-        The form of structure notation used for searching, e.g. ``smiles``.
+        The form of structure notation used for searching, e.g. `smiles`.
 
-        Currently only works with ``smiles``.
+        Currently only works with `smiles`.
         '''
         if 'structtype' in self._params:
             return self._params['structtype']
@@ -110,15 +110,15 @@ class CMGroup:
         '''
         When the group was last updated, according to the supplied parameters.
 
-        This property is a python ``datetime.date`` object. It cannot be
-        serialized to JSON or Excel. Use ``last_updated_str`` instead.
+        This property is a python `datetime.date` object. It cannot be
+        serialized to JSON or Excel. Use `last_updated_str` instead.
         '''
         return self._last_updated
 
     @property
     def last_updated_str(self):
         '''
-        Return the ``last_updated`` parameter used to construct the object.
+        Return the `last_updated` parameter used to construct the object.
         '''
         return self._params['last_updated']
 

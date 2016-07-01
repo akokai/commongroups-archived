@@ -2,13 +2,13 @@
 '''
 Google Spreadsheet access.
 
-See the ``gspread`` docs for instructions on getting OAuth2 credentials for
+See the `gspread` docs for instructions on getting OAuth2 credentials for
 Google Drive API access: http://gspread.readthedocs.io/en/latest/index.html
 Make a copy of the service account credentials JSON file in
-``../private/google-credentials.json``.
+`../private/google-credentials.json`.
 
 Notes:
-- Opening by key or by URL in ``gspread`` is broken by the "New Sheets",
+- Opening by key or by URL in `gspread` is broken by the "New Sheets",
 but opening by title seems to work.
 - Don't forget to share the relevant Google Spreadsheet with your Google
 service account client e-mail.
@@ -41,7 +41,7 @@ SCOPE = ['https://spreadsheets.google.com/feeds']
 
 
 def get_spreadsheet():
-    '''Open the group parameters spreadsheet as a ``gspread.Spreadsheet``.'''
+    '''Open the group parameters spreadsheet as a `gspread.Spreadsheet`.'''
     creds = ServiceAccountCredentials.from_json_keyfile_name(API_JSON, SCOPE)
     logger.debug('Authorizing Google Service Account credentials.')
     google = gspread.authorize(creds)
@@ -63,7 +63,7 @@ def get_params(doc, worksheet='all CMGs'):
 
 
 def get_cmgs(doc, worksheet='all CMGs'):
-    '''Generate ``CMGroup`` objects from parameters in spreadsheet rows.'''
+    '''Generate `CMGroup` objects from parameters in spreadsheet rows.'''
     for params in get_params(doc, worksheet):
         yield CMGroup(params)
 
@@ -72,7 +72,7 @@ def params_to_json(doc, worksheet='all CMGs', file_name=None):
     '''
     Get group parameters from given worksheet and output to a JSON file.
 
-    A JSON file with the given name will be created in the ``data`` directory.
+    A JSON file with the given name will be created in the `data` directory.
     '''
     if file_name is None:
         logger.error('No output file name specified.')
