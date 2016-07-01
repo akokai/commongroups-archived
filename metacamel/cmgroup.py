@@ -110,17 +110,11 @@ class CMGroup:
         '''
         When the group was last updated, according to the supplied parameters.
 
-        This property is a python `datetime.date` object. It cannot be
-        serialized to JSON or Excel. Use `last_updated_str` instead.
+        This property is either a python `datetime.date` object, or `None`.
+        Note that `datetime.date` can't be serialized to JSON or Excel
+        without first converting to string.
         '''
         return self._last_updated
-
-    @property
-    def last_updated_str(self):
-        '''
-        Return the `last_updated` parameter used to construct the object.
-        '''
-        return self._params['last_updated']
 
     @property
     def listkey(self):
@@ -209,7 +203,8 @@ class CMGroup:
         cids = pc.retrieve_search_results(self.listkey, **listkey_args)
 
         logger.debug('Looking up details for %i CIDs.', len(cids))
-        new_compounds = list(islice(pc.get_compound_info(cids), None))
+        new = pc.get_compound_info(cids, newer_than=self.last_updated)
+        new_compounds = list(islice(new, None))
 
         logger.info('Adding %i compounds from PubChem search to group %s.',
                     len(new_compounds), self.materialid)
@@ -222,7 +217,6 @@ class CMGroup:
         '''
         Perform a PubChem search to update a compound group.
         '''
-        # TO DO: Consider last_updated...
         self.init_pubchem_search()
         logger.debug('Waiting %i s before retrieving search results.', wait)
         sleep(wait)

@@ -81,4 +81,4 @@ def params_to_json(doc, worksheet='all CMGs', file_name=None):
     group_params = list(islice(get_params(doc, worksheet), None))
 
     with open(os.path.join(DATA_PATH, file_name), 'w') as params_file:
-        json.dump(group_params, params_file, indent=2)
+        json.dump(group_params, params_file, indent=2, sort_keys=True)
