@@ -39,13 +39,12 @@ TITLE = 'CMG parameters'
 
 SCOPE = ['https://spreadsheets.google.com/feeds']
 
-credentials = ServiceAccountCredentials.from_json_keyfile_name(API_JSON, SCOPE)
-
 
 def get_spreadsheet():
     '''Open the group parameters spreadsheet as a ``gspread.Spreadsheet``.'''
+    creds = ServiceAccountCredentials.from_json_keyfile_name(API_JSON, SCOPE)
     logger.debug('Authorizing Google Service Account credentials.')
-    google = gspread.authorize(credentials)
+    google = gspread.authorize(creds)
     logger.debug('Opening Google Spreadsheet by title: %s', TITLE)
     cmg_spreadsheet = google.open(TITLE)
     return cmg_spreadsheet

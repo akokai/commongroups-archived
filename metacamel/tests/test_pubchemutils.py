@@ -9,6 +9,12 @@ CIDS_WITH_CAS = [22230, 311, 2244]
 CIDS_WITHOUT_CAS = [13628823]
 
 
+def test_get_creation_date():
+    for cid in CIDS_WITH_CAS:
+        created = pc.get_creation_date(cid)
+        assert created is not None
+
+
 def test_get_known_casrns():
     for cid in CIDS_WITH_CAS:
         casrns = pc.get_known_casrns(cid)
@@ -30,11 +36,9 @@ def test_get_compound_info():
     cids = [241, 2912, 13628823, 24290]
     results = list(islice(pc.get_compound_info(cids), None))
     for result in results:
-        print('CID: {0}\nAll CASRNs: {1}'.format(result['CID'],
-                                                 result['CASRN_list']))
         assert result['CASRN_list'] is not None
         assert result['IUPAC_name'] is not None
-        # assert result['creation_date'] is not None # ...or something
+        assert result['creation_date'] is not None
 
 
 def test_filter_listkey_args():

@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import logging
 from time import sleep
+from datetime import date
 from urllib.parse import quote, urlencode
 
 from boltons.setutils import IndexedSet
@@ -21,6 +22,23 @@ PUG_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug'
 PUG_VIEW_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug_view'
 
 
+def get_creation_date(cid):
+    '''Get the date of creation of the CID.'''
+    uri = PUG_BASE + '/compound/cid/{0}/dates/JSON'.format(cid)
+    logger.debug('Getting creation date of CID %s. Request URI: %s', cid, uri)
+    req = requests.get(uri)
+
+    try:
+        data = req.json()['InformationList']['Information'][0]['CreationDate']
+        date_args = [int(data[k]) for k in ('Year', 'Month', 'Day')]
+        created = date(*date_args)
+    except (KeyError, TypeError, ValueError):
+        logger.warning('Could not retrieve creation date for CID %s.', cid)
+        created = None
+
+    return created
+
+
 def get_known_casrns(cid):
     '''
     Get PubChem-designated CASRNs for a given CID and return an IndexedSet.
@@ -29,8 +47,8 @@ def get_known_casrns(cid):
     '''
     uri = PUG_VIEW_BASE + '/data/compound/{0}/JSON?heading=CAS'.format(cid)
     logger.debug('Getting known CASRNs for CID %s. Request URI: %s', cid, uri)
-    casrn_req = requests.get(uri)
-    data = casrn_req.json()
+    req = requests.get(uri)
+    data = req.json()
     casrns = IndexedSet()
 
     def visit(path, key, value):
@@ -51,17 +69,26 @@ def get_known_casrns(cid):
     return casrns
 
 
-def get_compound_info(cids):
+def get_compound_info(cids, newer_than=None):
     '''
     Generate dicts of information retrieved from PubChem for a list of CIDs.
 
     Uses the PubChem API. CIDs can be an iterable of ints or strings.
-    Retrieves CASRNs, IUPAC names... TO DO: date added to PubChem!
+
+    Passing `newer_than` will only retrieve information on the CID if it has
+    a creation date newer than what you specify (as a `datetime.date`).
+
+    Retrieves CASRNs, IUPAC names, and date created in PubChem.
     CASRNs are returned as a space-separated string with the 'best' one first.
     '''
     for cid in cids:
-        casrns = get_known_casrns(cid)  # Instantiates an IndexedSet.
+        created = get_creation_date(cid)
+        # TODO: Check against `newer_than` date.
+        creation_date = created.isoformat() if created else ''
         sleep(0.2)  # Try to limit to about 5 REST API requests per second.
+
+        casrns = get_known_casrns(cid)  # Instantiates an IndexedSet.
+        sleep(0.2)
 
         cpd = pcp.Compound.from_cid(cid)
         sleep(0.2)
@@ -78,8 +105,12 @@ def get_compound_info(cids):
         # Convert the IndexedSet into a string: if any 'known' CASRNs were
         # found, those will come first.
         casrns_string = ' '.join(casrns)
-        results = {'CID': cid, 'CASRN_list': casrns_string,
-                   'IUPAC_name': cpd.iupac_name}
+
+        results = {'CID': cid,
+                   'created': created,              # datetime.date object
+                   'creation_date': creation_date,  # string
+                   'CASRN_list': casrns_string,
+                   'IUPAC_name': cpd.iupac_name}    # Requires a request.
         sleep(0.2)
         yield results
 
