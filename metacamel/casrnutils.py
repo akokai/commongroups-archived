@@ -11,10 +11,11 @@ def validate(casrn, boolean=False):
     '''
     Check the validity of a CASRN using the check digit.
 
-    Returns cleaned CASRN as unicode, or None if invalid.
-    If boolean=True, returns True or False.
-    Input can be str, unicode, or int. Non-numeric characters are ignored.
-    Based on CAS documentation:
+    Returns cleaned CASRN as `unicode` (`str`), or `None` if invalid.
+    If passed `boolean=True`, returns `True` for valid CASRNS or `False` for
+    invalid ones.
+    Input can be `str`, `unicode`, or `int`. Non-numeric characters
+    are ignored. Based on CAS documentation:
     https://www.cas.org/content/chemical-substances/checkdig
     '''
     casrn = str(casrn)

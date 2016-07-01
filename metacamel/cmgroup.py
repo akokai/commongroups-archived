@@ -8,6 +8,7 @@ import logging
 from copy import deepcopy
 from itertools import islice
 from time import asctime, sleep
+from datetime import date
 
 from pandas import DataFrame, ExcelWriter
 from boltons.fileutils import mkdir_p
@@ -25,10 +26,11 @@ RESULTS_PATH = os.path.join(_PARENT_PATH, 'results')
 mkdir_p(RESULTS_PATH)
 
 # These are the expected headings of spreadsheet columns.
-# They are also the column headings used for Excel exports.
+# They're also the column headings used for Excel exports of group parameters.
 PARAMS_KEYS = ['materialid', 'name', 'searchtype',
                'structtype', 'searchstring', 'last_updated']
-COMPOUNDS_KEYS = ['CID', 'CASRN_list', 'IUPAC_name']
+# These are the column headings used for Excel exports of compound lists.
+COMPOUNDS_KEYS = ['CID', 'CASRN_list', 'IUPAC_name', 'creation_date']
 
 
 class CMGroup:
@@ -38,22 +40,35 @@ class CMGroup:
         '''
         Initialize from a dict containing all parameters of a compound group.
 
-        The dict should contain ``materialid``, ``name``,` `searchtype``,
-        ``structtype``, ``searchstring``, and ``last_updated``. For now...
+        The dict should contain `materialid`, `name`,` `searchtype`,
+        `structtype`, `searchstring`, and `last_updated`. (For now...)
         '''
         if 'materialid' in params:
             self._materialid = params['materialid']
         else:
             logger.warning('Initializing CMGroup with no given materialid.')
             self._materialid = asctime().replace(' ', '_').replace(':', '')
+
+        logger.debug('Created %s', self)
         self._params = params
         self._compounds = []
         self._listkey = None
-        logger.debug('Created %s', self)
+        if self._params['last_updated'] == '':
+            self._last_updated = None
+        else:
+            try:
+                date_args = [int(x) for x in
+                             self._params['last_updated'].split('-')]
+                self._last_updated = date(*date_args)
+            except (KeyError, TypeError, ValueError):
+                logger.warning('Invalid date format: %s. '
+                               'Updating by date is disabled for %s.',
+                               self._params['last_updated'], self)
+                self._last_updated = None
 
     @property
     def materialid(self):
-        '''The alphanumeric ID of the chemical/material group.'''
+        '''The numeric ID of the chemical/material group.'''
         return self._materialid
 
     @property
@@ -67,7 +82,7 @@ class CMGroup:
         '''
         The type of structure-based search used to define this group.
 
-        Currently only ``substructure`` is of any use.
+        Currently only `substructure` is of any use.
         '''
         if 'searchtype' in self._params:
             return self._params['searchtype']
@@ -75,9 +90,9 @@ class CMGroup:
     @property
     def structtype(self):
         '''
-        The form of structure notation used for searching, e.g. ``smiles``.
+        The form of structure notation used for searching, e.g. `smiles`.
 
-        Currently only works with ``smiles``.
+        Currently only works with `smiles`.
         '''
         if 'structtype' in self._params:
             return self._params['structtype']
@@ -93,12 +108,19 @@ class CMGroup:
     @property
     def last_updated(self):
         '''
-        When the group was last updated in the chemical & material library.
+        When the group was last updated, according to the supplied parameters.
 
-        Should be some standard date format. TBD! Not implemented yet!
+        This property is a python `datetime.date` object. It cannot be
+        serialized to JSON or Excel. Use `last_updated_str` instead.
         '''
-        if 'last_updated' in self._params:
-            return self._params['last_updated']
+        return self._last_updated
+
+    @property
+    def last_updated_str(self):
+        '''
+        Return the `last_updated` parameter used to construct the object.
+        '''
+        return self._params['last_updated']
 
     @property
     def listkey(self):
@@ -164,7 +186,8 @@ class CMGroup:
                              self.materialid)
                 self.listkey = key
             else:
-                logger.warning('Sorry, can only do substructure searches in PubChem at this time.')
+                logger.error('Sorry, can only do substructure searches '
+                             'in PubChem at this time.')
                 raise NotImplementedError
         except KeyError:
             logger.exception('Missing parameters.')
