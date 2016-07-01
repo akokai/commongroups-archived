@@ -83,9 +83,17 @@ def get_compound_info(cids, newer_than=None):
     '''
     for cid in cids:
         created = get_creation_date(cid)
-        # TODO: Check against `newer_than` date.
-        creation_date = created.isoformat() if created else ''
         sleep(0.2)  # Try to limit to about 5 REST API requests per second.
+
+        if isinstance(newer_than, date):
+            delta = created - newer_than
+            # This will skip CIDs created before the date of last update, but
+            # will include those that were added on exactly the same day.
+            if delta.days < 0:
+                logger.info('Skipping CID %s: older than last update.', cid)
+                continue
+
+        creation_date = created.isoformat() if created else ''
 
         casrns = get_known_casrns(cid)  # Instantiates an IndexedSet.
         sleep(0.2)
