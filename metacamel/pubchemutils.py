@@ -24,9 +24,9 @@ PUG_VIEW_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug_view'
 
 def get_creation_date(cid):
     '''Get the date of creation of the CID.'''
-    uri = PUG_BASE + '/compound/cid/{0}/dates/JSON'.format(cid)
-    logger.debug('Getting creation date of CID %s. Request URI: %s', cid, uri)
-    req = requests.get(uri)
+    url = PUG_BASE + '/compound/cid/{0}/dates/JSON'.format(cid)
+    logger.debug('Getting creation date of CID %s. Request URL: %s', cid, url)
+    req = requests.get(url)
 
     try:
         data = req.json()['InformationList']['Information'][0]['CreationDate']
@@ -45,9 +45,9 @@ def get_known_casrns(cid):
 
     This method may need to change as PubChem improves access to CASRNs.
     '''
-    uri = PUG_VIEW_BASE + '/data/compound/{0}/JSON?heading=CAS'.format(cid)
-    logger.debug('Getting known CASRNs for CID %s. Request URI: %s', cid, uri)
-    req = requests.get(uri)
+    url = PUG_VIEW_BASE + '/data/compound/{0}/JSON?heading=CAS'.format(cid)
+    logger.debug('Getting known CASRNs for CID %s. Request URL: %s', cid, url)
+    req = requests.get(url)
     data = req.json()
     casrns = IndexedSet()
 
@@ -138,9 +138,9 @@ def init_substruct_search(struct, method='smiles'):
     '''
     search_path = '/compound/substructure/{0}/{1}/JSON'.format(method,
                                                                quote(struct))
-    search_uri = PUG_BASE + search_path
-    logger.debug('Substructure search request URI: %s', search_uri)
-    search_req = requests.get(search_uri)
+    search_url = PUG_BASE + search_path
+    logger.debug('Substructure search request URL: %s', search_url)
+    search_req = requests.get(search_url)
 
     if search_req.status_code != 202:
         logger.error('Unexpected request status: %s', search_req.status_code)
@@ -157,19 +157,19 @@ def retrieve_search_results(listkey, **kwargs):
     '''
     Retrieve search results from the PubChem API using the given ListKey.
     '''
-    key_uri = PUG_BASE + '/compound/listkey/{0}/cids/JSON'.format(listkey)
+    key_url = PUG_BASE + '/compound/listkey/{0}/cids/JSON'.format(listkey)
     listkey_args = filter_listkey_args(**kwargs) if kwargs else None
     if listkey_args:
-        key_uri = key_uri + '?' + urlencode(kwargs)
-    logger.debug('ListKey retrieval request URI: %s', key_uri)
-    key_req = requests.get(key_uri)
+        key_url = key_url + '?' + urlencode(kwargs)
+    logger.debug('ListKey retrieval request URL: %s', key_url)
+    key_req = requests.get(key_url)
     logger.debug('ListKey retrieval request status: %s',
                  key_req.status_code)
 
     while key_req.status_code == 202:
         logger.debug('Server not ready. Waiting additional 10 s.')
         sleep(10)
-        key_req = requests.get(key_uri)
+        key_req = requests.get(key_url)
 
     try:
         cids = key_req.json()['IdentifierList']['CID']
