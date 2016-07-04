@@ -57,6 +57,11 @@ CONFIG = {
             'handlers': ['console', 'file'],
             'propagate': False
         },
+        'metacamel.run': {
+            'level': 'DEBUG',
+            'handlers': ['console', 'file'],
+            'propagate': False
+        },
         'pubchempy': {
             'level': 'DEBUG',
             'handlers': ['console', 'file'],

@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import os
 import logging
+import json
 from copy import deepcopy
 from itertools import islice
 from time import asctime, sleep
@@ -199,8 +200,13 @@ class CMGroup:
 
         logger.debug('Retrieving PubChem search results for %s.',
                      self.materialid)
+
         listkey_args = pc.filter_listkey_args(**kwargs) if kwargs else None
-        cids = pc.retrieve_search_results(self.listkey, **listkey_args)
+
+        if listkey_args:
+            cids = pc.retrieve_search_results(self.listkey, **listkey_args)
+        else:
+            cids = pc.retrieve_search_results(self.listkey)
 
         logger.debug('Looking up details for %i CIDs.', len(cids))
         new = pc.get_compound_info(cids, newer_than=self.last_updated)
@@ -231,9 +237,9 @@ class CMGroup:
             raise NotImplementedError
 
 
-def batch_group_search(groups, wait=60, **kwargs):
+def batch_cmg_search(groups, wait=60, **kwargs):
     '''
-    Perform substructure searches for many groups all at once.
+    Perform substructure searches for many CMGs and output to Excel files.
     '''
     for group in groups:
         group.init_pubchem_search()
@@ -242,3 +248,17 @@ def batch_group_search(groups, wait=60, **kwargs):
 
     for group in groups:
         group.retrieve_pubchem_compounds(**kwargs)
+        group.to_excel()
+
+
+def params_from_json(params_file):
+    '''Load a list of group parameters from a JSON file.'''
+    with open(params_file, 'r') as json_file:
+        params_list = json.load(json_file)
+    return params_list
+
+
+def cmgs_from_json(params_file):
+    '''Generate `CMGroup` objects from a JSON file.'''
+    for params in params_from_json(params_file):
+        yield CMGroup(params)

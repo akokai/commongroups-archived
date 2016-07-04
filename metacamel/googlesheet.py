@@ -14,6 +14,8 @@ but opening by title seems to work.
 service account client e-mail.
 '''
 
+from __future__ import unicode_literals
+
 import os
 import logging
 import json
@@ -50,8 +52,9 @@ def get_spreadsheet():
     return cmg_spreadsheet
 
 
-def get_params(doc, worksheet='all CMGs'):
+def get_params(worksheet='all CMGs'):
     '''Generate dicts of parameters from spreadsheet rows.'''
+    doc = get_spreadsheet()
     logger.debug('Getting worksheet by title: %s', worksheet)
     wks = doc.worksheet(worksheet)
 
@@ -62,13 +65,13 @@ def get_params(doc, worksheet='all CMGs'):
         yield params
 
 
-def get_cmgs(doc, worksheet='all CMGs'):
+def get_cmgs(worksheet='all CMGs'):
     '''Generate `CMGroup` objects from parameters in spreadsheet rows.'''
-    for params in get_params(doc, worksheet):
+    for params in get_params(worksheet):
         yield CMGroup(params)
 
 
-def params_to_json(doc, worksheet='all CMGs', file_name=None):
+def params_to_json(worksheet='all CMGs', file_name=None):
     '''
     Get group parameters from given worksheet and output to a JSON file.
 
@@ -78,7 +81,7 @@ def params_to_json(doc, worksheet='all CMGs', file_name=None):
         logger.error('No output file name specified.')
         raise TypeError
 
-    group_params = list(islice(get_params(doc, worksheet), None))
+    group_params = list(islice(get_params(worksheet), None))
 
-    with open(os.path.join(DATA_PATH, file_name), 'w') as params_file:
+    with open(file_name, 'w') as params_file:
         json.dump(group_params, params_file, indent=2, sort_keys=True)
