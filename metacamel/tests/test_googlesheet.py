@@ -7,8 +7,6 @@ from itertools import islice
 from .. import googlesheet as gs
 
 _CUR_PATH = os.path.dirname(os.path.abspath(__file__))
-_PARENT_PATH = os.path.dirname(os.path.dirname(_CUR_PATH))
-DATA_PATH = os.path.join(_PARENT_PATH, 'data')
 
 
 def test_get_spreadsheet():
@@ -25,9 +23,9 @@ def test_get_params():
 def test_get_cmgs():
     cmgs = list(islice(gs.get_cmgs('test'), None))
     assert len(cmgs) == 4
-    assert len(cmgs[0].materialid) == 7
+    assert len(cmgs[0].materialid) == 5
 
 
 def test_params_to_json():
     gs.params_to_json('test',
-                      os.path.join(DATA_PATH, 'test_group_params.json'))
+                      os.path.join(_CUR_PATH, 'group_params.json'))

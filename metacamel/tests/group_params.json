@@ -1,7 +1,7 @@
 [
   {
     "last_updated": "2006-06-06",
-    "materialid": "2072010",
+    "materialid": "test1",
     "name": "Mercury Compounds, Methylmercury",
     "searchstring": "[CH3][Hg]",
     "searchtype": "substructure",
@@ -9,7 +9,7 @@
   },
   {
     "last_updated": "6/6/2006",
-    "materialid": "2072060",
+    "materialid": "test2",
     "name": "MERCURY COMPOUNDS, ORGANIC",
     "searchstring": "C[Hg]",
     "searchtype": "substructure",
@@ -17,7 +17,7 @@
   },
   {
     "last_updated": "2016",
-    "materialid": "2072004",
+    "materialid": "test3",
     "name": "LEAD COMPOUNDS, ORGANIC",
     "searchstring": "C[Pb]",
     "searchtype": "substructure",
@@ -25,7 +25,7 @@
   },
   {
     "last_updated": "never",
-    "materialid": "2072143",
+    "materialid": "test4",
     "name": "Zinc chromates",
     "searchstring": "[O-][Cr](=O)(=O)[O-].[Zn+2]",
     "searchtype": "substructure",

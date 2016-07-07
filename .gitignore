@@ -1,6 +1,7 @@
+data/
+log/
 private/
 results/
-log/
 *.sublime*
 
 # Operating system junk

@@ -58,8 +58,8 @@ class CMGroup:
                                        self.materialid + '_cids.json')
         if os.path.exists(self._cids_file):
             self.load_returned_cids()
-        self._compounds_jsonl = os.path.join(DATA_PATH,
-                                             self.materialid + '_cpds.jsonl')
+        self._compounds_file = os.path.join(DATA_PATH,
+                                            self.materialid + '_cpds.jsonl')
         self._compounds = []
         self._listkey = None
 
@@ -160,6 +160,7 @@ class CMGroup:
         try:
             with open(self._cids_file, 'r') as json_file:
                 cids = json.load(json_file)
+                logger.info('Loaded existing CIDs list for %s.', self)
                 self.returned_cids = cids
         except FileNotFoundError:
             logger.info('Could not open CIDs file.')
@@ -251,34 +252,38 @@ class CMGroup:
         logger.debug('Clearing ListKey for %s.', self.materialid)
         del self.listkey
 
-    def update_with_cids(self, cpds_file=None):
+    def update_with_cids(self):
         '''
         Retrieve information on a list of CIDs and add new ones to the CMG.
         '''
-        compounds_jsonl = cpds_file or self._compounds_jsonl
-
         if self.returned_cids == []:
             logger.warning('No CIDs to update %s.', self)
             return None
         else:
             logger.info('Updating %s from list of returned CIDS.', self)
 
-        if os.path.exists(compounds_jsonl):
-            with open(compounds_jsonl, 'r') as cpds_file:
-                lines = JSONLIterator(cpds_file, reverse=True)
-                last_item = lines.next()
-            last_cid = last_item['CID']
-            logger.info('Resuming update. Last CID added: %s.', last_cid)
-            new_index = self.returned_cids.index(last_cid) + 1
-            cids = self.returned_cids[new_index:]
-        else:
-            cids = self.returned_cids
+        cids = self.returned_cids
+        
+        if os.path.exists(self._compounds_file):
+            # TODO: Test this... 
+            # - It should be able to add on to a compound list that has no
+            #   overlap with `cids` list. (index not found).
+            # - It should not freak out over an empty JSONL file.
+            try:
+                with open(self._compounds_file, 'r') as cpds_file:
+                    lines = JSONLIterator(cpds_file, reverse=True)
+                    last_item = lines.next()
+                last_cid = last_item['CID']
+                new_index = self.returned_cids.index(last_cid) + 1
+                cids = self.returned_cids[new_index:]
+                logger.info('Resuming update. Last CID added: %s.', last_cid)
+            except (ValueError, StopIteration):
+                pass
 
         logger.info('Looking up details for %i CIDs.', len(cids))
         new = pc.gen_compounds(cids, self.last_updated)
 
-        # TODO: Save to JSON (lines) incrementally.
-        with open(compounds_jsonl, 'a') as cpds_file:
+        with open(self._compounds_file, 'a') as cpds_file:
             while True:
                 new_compounds = list(islice(new, 5))
                 if new_compounds == []:
@@ -287,13 +292,17 @@ class CMGroup:
                     cpds_file.write(json.dumps(cpd) + '\n')
                 sleep(1)
 
-        with open(compounds_jsonl, 'r') as cpds_file:
+        logger.info('Completed PubChem update for %s.', self)
+
+        # TODO: decide if the following (here to end of function) is necessary
+        with open(self._compounds_file, 'r') as cpds_file:
             lines = JSONLIterator(cpds_file)
             new_compounds = list(islice(lines, None))
 
         logger.info('Adding %i compounds from PubChem search to group %s.',
                     len(new_compounds), self.materialid)
         self._compounds.extend(new_compounds)
+        # TODO: remove cids JSON file.
 
     def pubchem_update(self, wait=10, **kwargs):
         '''
