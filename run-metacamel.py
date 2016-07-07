@@ -33,7 +33,10 @@ def main():
                              'instead of Google spreadsheet')
     parser.add_argument('-w', '--worksheet', action='store', type=str,
                         help='worksheet to get parameters from',
-                        default='all CMGs')
+                        default='new CMGs')
+    parser.add_argument('-r', '--resume', action='store_true',
+                        help='resume previous update (from CID lists)',
+                        default=False)
     args = parser.parse_args()
 
     if args.json_file:

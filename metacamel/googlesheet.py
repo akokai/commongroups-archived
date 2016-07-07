@@ -52,7 +52,7 @@ def get_spreadsheet():
     return cmg_spreadsheet
 
 
-def get_params(worksheet='all CMGs'):
+def get_params(worksheet):
     '''Generate dicts of parameters from spreadsheet rows.'''
     doc = get_spreadsheet()
     logger.debug('Getting worksheet by title: %s', worksheet)
@@ -65,13 +65,13 @@ def get_params(worksheet='all CMGs'):
         yield params
 
 
-def get_cmgs(worksheet='all CMGs'):
+def get_cmgs(worksheet):
     '''Generate `CMGroup` objects from parameters in spreadsheet rows.'''
     for params in get_params(worksheet):
         yield CMGroup(params)
 
 
-def params_to_json(worksheet='all CMGs', file_name=None):
+def params_to_json(worksheet, file_name=None):
     '''
     Get group parameters from given worksheet and output to a JSON file.
 
