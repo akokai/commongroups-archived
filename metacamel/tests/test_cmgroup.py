@@ -25,14 +25,28 @@ def test_cmgroup():
 
 
 def test_resume_update():
-    materialid = PARAMS_LIST[3]['materialid']
-    shutil.copy(os.path.join(_CUR_PATH, 'cids.json'),
-                os.path.join(DATA_PATH, materialid + '_cids.json'))
-    shutil.copy(os.path.join(_CUR_PATH, 'cpds.jsonl'),
-                os.path.join(DATA_PATH, materialid + '_cpds.jsonl'))
     group = cmg.CMGroup(PARAMS_LIST[3])
+    shutil.copy(os.path.join(_CUR_PATH, 'cids.json'), group._CIDS_FILE)
+    shutil.copy(os.path.join(_CUR_PATH, 'cpds.jsonl'), group._COMPOUNDS_FILE)
     group.load_returned_cids()
     group.update_with_cids()
+    assert len(group) == 5
+
+    # Test what happens when _COMPOUNDS_FILE contains CIDS that are
+    # not listed in the _CIDS_FILE. It should append compounds.
+    shutil.copy(os.path.join(_CUR_PATH, 'cpds_other.jsonl'),
+                group._COMPOUNDS_FILE)
+    group.load_returned_cids()
+    group.update_with_cids()
+    assert len(group) == 8
+
+    # Test what happens when _COMPOUNDS_FILE is absent. In this case
+    # It should end up containing all the CIDs in _CIDS_FILE.
+    group.clean_json()
+    shutil.copy(os.path.join(_CUR_PATH, 'cids.json'), group._CIDS_FILE)
+    group.load_returned_cids()
+    group.update_with_cids()
+    assert len(group) == 5
 
 
 def test_pubchem_update():
@@ -52,4 +66,4 @@ def test_batch_cmg_search():
 
     for group in groups:
         assert len(group) > 0
-        assert group.compounds_list[0]['IUPAC_name'] is not None
+        assert group.compounds[0]['IUPAC_name'] is not None

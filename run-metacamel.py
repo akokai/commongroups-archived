@@ -29,13 +29,17 @@ def main():
     '''
     parser = argparse.ArgumentParser(description=main.__doc__)
     parser.add_argument('-f', '--json_file', action='store', type=str,
-                        help='JSON file to read group parameters from '
+                        help='read group parameters from a JSON file '
                              'instead of Google spreadsheet')
     parser.add_argument('-w', '--worksheet', action='store', type=str,
                         help='worksheet to get parameters from',
                         default='new CMGs')
-    parser.add_argument('-r', '--resume', action='store_true',
+    parser.add_argument('-r', '--resume_update', action='store_true',
                         help='resume previous update (from CID lists)',
+                        default=False)
+    parser.add_argument('-c', '--clean_start', action='store_true',
+                        help='do not resume previous searches; '
+                             'delete existing data before starting',
                         default=False)
     args = parser.parse_args()
 
@@ -49,8 +53,12 @@ def main():
 
     groups = list(islice(cmg_gen, None))
 
+    if args.clean_start:
+        for group in groups:
+            group.clean_json()
+
     logger.debug('Executing batch CMG search.')
-    cmg.batch_cmg_search(groups)
+    cmg.batch_cmg_search(groups, args.resume_update)
 
 
 if __name__ == '__main__':
