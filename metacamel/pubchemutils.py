@@ -69,57 +69,65 @@ def get_known_casrns(cid):
     return casrns
 
 
-def get_compound_info(cids, newer_than=None):
+def get_compound_info(cid):
+    '''
+    Get CASRNs and IUPAC name for a CID and return a dict.
+
+    CASRNs are returned as a space-separated string with the 'best' one first.
+    Try to keep API request rate below 5 per second.
+    '''
+    casrns = get_known_casrns(cid)  # Instantiates an IndexedSet.
+    sleep(0.2)
+
+    cpd = pcp.Compound.from_cid(cid)
+    sleep(0.2)
+
+    try:
+        # This involves another API request for `cpd.synoynms`:
+        cas_synonyms = find_valid(' '.join(cpd.synonyms))
+        sleep(0.2)
+        logger.info('Found %i CASRNs in synonyms for CID %s.',
+                    len(cas_synonyms), cid)
+        casrns.update(cas_synonyms)
+    except IndexError:
+        logger.info('No CASRNs found in synonyms for CID %s.', cid)
+
+    # Convert the IndexedSet into a string: if any 'known' CASRNs were
+    # found, those will come first.
+    casrns_string = ' '.join(casrns)
+
+    results = {'CID': cid,
+               'CASRN_list': casrns_string,
+               'IUPAC_name': cpd.iupac_name}    # Another API request.
+    sleep(0.2)
+    return results
+
+
+def gen_compounds(cids, last_updated=None):
     '''
     Generate dicts of information retrieved from PubChem for a list of CIDs.
 
-    Uses the PubChem API. CIDs can be an iterable of ints or strings.
-
-    Passing `newer_than` will only retrieve information on the CID if it has
-    a creation date newer than what you specify (as a `datetime.date`).
-
-    Retrieves CASRNs, IUPAC names, and date created in PubChem.
-    CASRNs are returned as a space-separated string with the 'best' one first.
+    Can compare CID creation date to CMG `last_updated` (`datetime.date`).
+    Ideally `cids` should be a list of CIDs.
+    Since this is a generator, it can be made to start and stop anywhere.
     '''
     for cid in cids:
         created = get_creation_date(cid)
-        sleep(0.2)  # Try to limit to about 5 REST API requests per second.
+        sleep(0.2)
 
-        if isinstance(newer_than, date):
-            delta = created - newer_than
-            # This will skip CIDs created before the date of last update, but
-            # will include those that were added on exactly the same day.
+        if isinstance(last_updated, date):
+            delta = created - last_updated
+            # This will skip CIDs created before the day of `last_updated`,
+            # but will include those created on exactly the same day.
             if delta.days < 0:
-                logger.info('Skipping CID %s: older than last update.', cid)
+                logger.info('Skipping CID %s: predates last update.', cid)
                 continue
 
         creation_date = created.isoformat() if created else ''
 
-        casrns = get_known_casrns(cid)  # Instantiates an IndexedSet.
-        sleep(0.2)
+        results = get_compound_info(cid)
+        results.update({'creation_date': creation_date})
 
-        cpd = pcp.Compound.from_cid(cid)
-        sleep(0.2)
-
-        try:
-            # This seems to involve another API request:
-            cas_synonyms = find_valid(' '.join(cpd.synonyms))
-            logger.info('Found %i CASRNs in synonyms for CID %s.',
-                        len(cas_synonyms), cid)
-            casrns.update(cas_synonyms)
-        except IndexError:
-            logger.info('No CASRNs found in synonyms for CID %s.', cid)
-
-        # Convert the IndexedSet into a string: if any 'known' CASRNs were
-        # found, those will come first.
-        casrns_string = ' '.join(casrns)
-
-        results = {'CID': cid,
-                   'created': created,              # datetime.date object
-                   'creation_date': creation_date,  # string
-                   'CASRN_list': casrns_string,
-                   'IUPAC_name': cpd.iupac_name}    # Requires a request.
-        sleep(0.2)
         yield results
 
 
