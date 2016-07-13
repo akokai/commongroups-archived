@@ -223,7 +223,7 @@ class CMGroup:
         logger.info('Writing Excel output to: %s', file_path)
 
         with ExcelWriter(file_path) as writer:
-            params_frame.to_excel(writer, sheet_name=self.materialid)
+            params_frame.to_excel(writer, sheet_name='CMG Parameters')
             compounds_frame.to_excel(writer, sheet_name='Compounds')
 
     def init_pubchem_search(self):
