@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 '''Logging configuration'''
 
+from __future__ import unicode_literals
+
 import os
 import sys
 import logging

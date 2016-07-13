@@ -144,11 +144,11 @@ class CMGroup:
             with open(self._COMPOUNDS_FILE, 'r') as cpds_file:
                 lines = JSONLIterator(cpds_file)
                 new_compounds = list(islice(lines, None))
-                logger.info('Loading %i compounds from JSON for %s.',
-                            len(new_compounds), self)
+                logger.debug('Loading %i compounds from JSON for %s.',
+                             len(new_compounds), self)
                 return new_compounds
         except (FileNotFoundError, ValueError, StopIteration):
-            logger.info('No compounds in %s.', self)
+            logger.debug('No compounds in %s.', self)
             return []
 
     def get_returned_cids(self):
@@ -158,7 +158,8 @@ class CMGroup:
         try:
             with open(self._CIDS_FILE, 'r') as json_file:
                 cids = json.load(json_file)
-                logger.info('Loaded existing CIDs list for %s.', self)
+                logger.debug('Loading search results: %i CIDs for %s.',
+                             len(cids), self)
                 return cids
         except (FileNotFoundError, json.JSONDecodeError):
             logger.debug('No existing CIDs found for %s.', self)
@@ -209,8 +210,8 @@ class CMGroup:
         '''
         try:
             if self.searchtype == 'substructure':
-                logger.debug('Initiating PubChem substructure search for %s.',
-                             self)
+                logger.info('Initiating PubChem substructure search for %s.',
+                            self)
                 key = pc.init_substruct_search(self.searchstring,
                                                method=self.structtype)
                 logger.debug('Setting ListKey for %s: %s.', self, key)
@@ -231,7 +232,7 @@ class CMGroup:
             logger.error('No existing ListKey to retrieve search results.')
             return None     # Raise an exception instead?
 
-        logger.debug('Retrieving PubChem search results for %s.', self)
+        logger.info('Retrieving PubChem search results for %s.', self)
 
         listkey_args = pc.filter_listkey_args(**kwargs) if kwargs else None
 
@@ -269,7 +270,7 @@ class CMGroup:
             cids = returned_cids
             logger.info('Starting update of %s from search results.', self)
 
-        logger.info('Looking up details for %i CIDs.', len(cids))
+        logger.info('Looking up information for %i CIDs.', len(cids))
         new = pc.gen_compounds(cids, self.last_updated)
 
         with open(self._COMPOUNDS_FILE, 'a') as cpds_file:
@@ -296,10 +297,10 @@ class CMGroup:
 
     def screen(self, compound):
         '''Screen a new compound for membership in the group.'''
-        if compound in self:
+        # TODO: Placeholder!
+        if compound in self.get_compounds():
             return True
         else:
-            # Placeholder!
             raise NotImplementedError
 
 

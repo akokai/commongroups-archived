@@ -57,8 +57,11 @@ def main():
         for group in groups:
             group.clean_data()
 
-    logger.debug('Executing batch CMG search.')
-    cmg.batch_cmg_search(groups, args.resume_update)
+    logger.debug('Starting batch CMG update process.')
+    try:
+        cmg.batch_cmg_search(groups, args.resume_update)
+    except:
+        logger.exception('Process failed.')
 
 
 if __name__ == '__main__':

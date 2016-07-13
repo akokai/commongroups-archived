@@ -65,7 +65,7 @@ def get_known_casrns(cid):
     except LookupError:
         logger.error('Failed to retrieve known CASRNs for CID %s.', cid)
 
-    logger.info('Found %i known CASRNs for CID %s.', len(casrns), cid)
+    logger.debug('Found %i known CASRNs for CID %s.', len(casrns), cid)
     return casrns
 
 
@@ -86,11 +86,11 @@ def get_compound_info(cid):
         # This involves another API request for `cpd.synoynms`:
         cas_synonyms = find_valid(' '.join(cpd.synonyms))
         sleep(0.2)
-        logger.info('Found %i CASRNs in synonyms for CID %s.',
-                    len(cas_synonyms), cid)
+        logger.debug('Found %i CASRNs in synonyms for CID %s.',
+                     len(cas_synonyms), cid)
         casrns.update(cas_synonyms)
     except IndexError:
-        logger.info('No CASRNs found in synonyms for CID %s.', cid)
+        logger.debug('No CASRNs found in synonyms for CID %s.', cid)
 
     # Convert the IndexedSet into a string: if any 'known' CASRNs were
     # found, those will come first.
