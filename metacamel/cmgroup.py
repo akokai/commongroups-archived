@@ -26,12 +26,19 @@ mkdir_p(DATA_PATH)
 RESULTS_PATH = os.path.join(_PARENT_PATH, 'results')
 mkdir_p(RESULTS_PATH)
 
-# These are the expected headings of spreadsheet columns.
-# They're also the column headings used for Excel exports of group parameters.
-PARAMS_KEYS = ['materialid', 'name', 'searchtype',
-               'structtype', 'searchstring', 'last_updated']
-# These are the column headings used for Excel exports of compound lists.
-COMPOUNDS_KEYS = ['CID', 'CASRN_list', 'IUPAC_name', 'creation_date']
+# The column headings used for Excel exports of group parameters:
+PARAMS_KEYS = ['materialid', 'name', 'searchtype', 'structtype',
+               'searchstring', 'last_updated', 'current_update']
+# The column headings used for Excel exports of compound lists.
+# Most correspond to keys that will be present in compound data dicts
+# returned from PubChem searches. Some are generated upon export.
+EXPORT_COLS = ['CASRN',         # Generated from CASRN_list upon export
+               'IUPAC_name',
+               'CMG_ID',        # Generated from CMGroup attributes
+               'Action',
+               'CASRN_list',
+               'CID',
+               'creation_date']
 
 
 class CMGroup:
@@ -44,11 +51,11 @@ class CMGroup:
         The dict should contain `materialid`, `name`,` `searchtype`,
         `structtype`, `searchstring`, and `last_updated`. (For now...)
         '''
-        if 'materialid' in params:
+        try:
             self._materialid = params['materialid']
-        else:
-            logger.warning('Initializing CMGroup with no given materialid.')
-            self._materialid = asctime().replace(' ', '_').replace(':', '')
+        except KeyError:
+            logger.critical('Cannot initialize CMGroup without materialid.')
+            raise
 
         logger.debug('Created %s', self)
 
@@ -64,18 +71,19 @@ class CMGroup:
                                        self.materialid + '_cids.json')
 
         # Determine whether we are checking for new additions to the group.
-        if self._params['last_updated'] == '':
+        try:
+            date_args = [int(x) for x in
+                         self._params['last_updated'].split('-')]
+            self._last_updated = date(*date_args)
+        except (KeyError, TypeError, ValueError):
+            logger.info('No date or invalid date format for %s. '
+                        'Updates will retrieve all search results.', self)
             self._last_updated = None
-        else:
-            try:
-                date_args = [int(x) for x in
-                             self._params['last_updated'].split('-')]
-                self._last_updated = date(*date_args)
-            except (KeyError, TypeError, ValueError):
-                logger.warning('Invalid date format: %s. '
-                               'Updating by date is disabled for %s.',
-                               self._params['last_updated'], self)
-                self._last_updated = None
+
+        # Track date of current update for this session.
+        # Could potentially result in missed CIDs, if the update process lasts
+        # > 1 day and some new compounds are added to PubChem in the meantime.
+        self._params.update({'current_update': date.today().isoformat()})
 
     @property
     def materialid(self):
@@ -194,12 +202,26 @@ class CMGroup:
         params_frame = DataFrame(self._params,
                                  columns=PARAMS_KEYS, index=[0])
         params_frame.set_index('materialid', inplace=True)
+
         compounds_frame = DataFrame(self.get_compounds(),
-                                    columns=COMPOUNDS_KEYS)
+                                    columns=EXPORT_COLS)
+        compounds_frame.CMG_ID = self.materialid
+        compounds_frame.Action = 'add'
+
+        def first_casrn(casrns):
+            if casrns:
+                return casrns.split()[0]
+            else:
+                return ''
+
+        compounds_frame.CASRN = compounds_frame.CASRN_list.apply(first_casrn)
+
         if not file_path:
             file_path = os.path.join(RESULTS_PATH,
                                      '{0}.xlsx'.format(self.materialid))
+
         logger.info('Writing Excel output to: %s', file_path)
+
         with ExcelWriter(file_path) as writer:
             params_frame.to_excel(writer, sheet_name=self.materialid)
             compounds_frame.to_excel(writer, sheet_name='Compounds')

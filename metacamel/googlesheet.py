@@ -26,7 +26,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from boltons.fileutils import mkdir_p
 
 from . import logconf
-from .cmgroup import CMGroup, PARAMS_KEYS
+from .cmgroup import CMGroup
 
 logger = logging.getLogger('metacamel.googlesheet')
 
@@ -37,9 +37,11 @@ API_JSON = os.path.join(PRIVATE_PATH, 'google-credentials.json')
 DATA_PATH = os.path.join(_PARENT_PATH, 'data')
 mkdir_p(DATA_PATH)
 
-TITLE = 'CMG parameters'
-
 SCOPE = ['https://spreadsheets.google.com/feeds']
+
+TITLE = 'CMG parameters'
+PARAMS_COLS = ['materialid', 'name', 'searchtype',
+               'structtype', 'searchstring', 'last_updated']
 
 
 def get_spreadsheet():
@@ -61,7 +63,7 @@ def get_params(worksheet):
     for i in range(2, wks.row_count + 1):
         if wks.cell(i, 1).value in [None, '']:
             raise StopIteration
-        params = {k: v for (k, v) in zip(PARAMS_KEYS, wks.row_values(i))}
+        params = {k: v for (k, v) in zip(PARAMS_COLS, wks.row_values(i))}
         yield params
 
 
