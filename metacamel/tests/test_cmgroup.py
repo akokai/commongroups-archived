@@ -21,14 +21,26 @@ def test_cmgroup():
         group = cmg.CMGroup(params)
         assert group.materialid == params['materialid']
         assert group.name == params['name']
-        assert len(group) == 0
+
+
+def test_clean_json():
+    group = cmg.CMGroup(PARAMS_LIST[3])
+    shutil.copy(os.path.join(_CUR_PATH, 'cids.json'), group._CIDS_FILE)
+    shutil.copy(os.path.join(_CUR_PATH, 'cpds.jsonl'), group._COMPOUNDS_FILE)
+    group = cmg.CMGroup(PARAMS_LIST[3])     # Re-initialize the CMGroup.
+    assert len(group) == 3
+    assert len(group.returned_cids) == 5
+    group.clean_json()
+    assert len(group) == 0
+    assert group.returned_cids == []
+    group.clean_json()
 
 
 def test_resume_update():
     group = cmg.CMGroup(PARAMS_LIST[3])
     shutil.copy(os.path.join(_CUR_PATH, 'cids.json'), group._CIDS_FILE)
     shutil.copy(os.path.join(_CUR_PATH, 'cpds.jsonl'), group._COMPOUNDS_FILE)
-    group.load_returned_cids()
+    group = cmg.CMGroup(PARAMS_LIST[3])     # Re-initialize the CMGroup.
     group.update_with_cids()
     assert len(group) == 5
 
@@ -36,6 +48,7 @@ def test_resume_update():
     # not listed in the _CIDS_FILE. It should append compounds.
     shutil.copy(os.path.join(_CUR_PATH, 'cpds_other.jsonl'),
                 group._COMPOUNDS_FILE)
+    group.load_compounds()
     group.load_returned_cids()
     group.update_with_cids()
     assert len(group) == 8

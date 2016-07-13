@@ -157,6 +157,9 @@ class CMGroup:
         self.compounds = self.compounds + new_compounds
 
     def load_compounds(self):
+        '''
+        Read compounds (list of dicts) from file to replace internal list.
+        '''
         try:
             with open(self._COMPOUNDS_FILE, 'r') as cpds_file:
                 lines = JSONLIterator(cpds_file)
@@ -166,6 +169,7 @@ class CMGroup:
                 self.compounds = new_compounds
         except (ValueError, StopIteration):
             logger.info('No compounds to be added to %s.', self)
+            self.compounds = []
 
     @property
     def returned_cids(self):
@@ -185,8 +189,9 @@ class CMGroup:
                 cids = json.load(json_file)
                 logger.info('Loaded existing CIDs list for %s.', self)
                 self.returned_cids = cids
-        except FileNotFoundError:
+        except (FileNotFoundError, json.JSONDecodeError):
             logger.debug('No existing CIDs found for %s.', self)
+            self.returned_cids = []
 
     def save_returned_cids(self, cids):
         '''
@@ -197,6 +202,19 @@ class CMGroup:
         self.returned_cids = cids
         with open(self._CIDS_FILE, 'w') as json_file:
             json.dump(cids, json_file)
+
+    def clean_json(self):
+        '''Clean up JSON files generated from PubChem search.'''
+        logger.debug('Removing JSON files for %s.', self)
+        try:
+            os.remove(self._CIDS_FILE)
+            os.remove(self._COMPOUNDS_FILE)
+        except OSError:
+            logger.exception('Failed to delete all JSON files.')
+
+        logger.debug('Resetting group %s.', self)
+        self.compounds = []
+        self.returned_cids = []
 
     def __len__(self):
         '''Return the length of the group's internal list of compounds.'''
@@ -333,19 +351,6 @@ class CMGroup:
         else:
             # Placeholder!
             raise NotImplementedError
-
-    def clean_json(self):
-        '''Clean up JSON files generated from PubChem search.'''
-        logger.debug('Removing JSON files for %s.', self)
-        try:
-            os.remove(self._CIDS_FILE)
-            os.remove(self._COMPOUNDS_FILE)
-        except OSError:
-            logger.exception('Failed to clean up JSON files.')
-
-        logger.debug('Resetting group %s.', self)
-        self._compounds = []
-        self._returned_cids = []
 
 
 def batch_cmg_search(groups, resume_update=False, wait=120, **kwargs):
