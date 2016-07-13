@@ -55,7 +55,7 @@ def main():
 
     if args.clean_start:
         for group in groups:
-            group.clean_json()
+            group.clean_data()
 
     logger.debug('Executing batch CMG search.')
     cmg.batch_cmg_search(groups, args.resume_update)

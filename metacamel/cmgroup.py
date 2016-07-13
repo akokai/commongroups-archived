@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 import os
 import logging
 import json
-from copy import deepcopy
 from itertools import islice
 from time import asctime, sleep
 from datetime import date
@@ -56,18 +55,15 @@ class CMGroup:
         self._params = params
         self._listkey = None
 
-        self._compounds = []
+        # Compounds list is stored in this JSONL file, one dict per line.
         self._COMPOUNDS_FILE = os.path.join(DATA_PATH,
                                             self.materialid + '_cpds.jsonl')
-        if os.path.exists(self._COMPOUNDS_FILE):
-            self.load_compounds()
 
-        self._returned_cids = []
+        # List of CIDs returned from last PubChem search would be stored here.
         self._CIDS_FILE = os.path.join(DATA_PATH,
                                        self.materialid + '_cids.json')
-        if os.path.exists(self._CIDS_FILE):
-            self.load_returned_cids()
 
+        # Determine whether we are checking for new additions to the group.
         if self._params['last_updated'] == '':
             self._last_updated = None
         else:
@@ -140,25 +136,9 @@ class CMGroup:
     def listkey(self, new_listkey):
         self._listkey = new_listkey
 
-    @listkey.deleter
-    def listkey(self):
-        self._listkey = None
-
-    @property
-    def compounds(self):
-        '''The internal list of compounds (a list of dicts).'''
-        return self._compounds
-
-    @compounds.setter
-    def compounds(self, new_compounds):
-        self._compounds = new_compounds
-
-    def add_compounds(self, new_compounds):
-        self.compounds = self.compounds + new_compounds
-
-    def load_compounds(self):
+    def get_compounds(self):
         '''
-        Read compounds (list of dicts) from file to replace internal list.
+        Read compounds (list of dicts) from file and store as an attribute.
         '''
         try:
             with open(self._COMPOUNDS_FILE, 'r') as cpds_file:
@@ -166,21 +146,12 @@ class CMGroup:
                 new_compounds = list(islice(lines, None))
                 logger.info('Loading %i compounds from JSON for %s.',
                             len(new_compounds), self)
-                self.compounds = new_compounds
-        except (ValueError, StopIteration):
-            logger.info('No compounds to be added to %s.', self)
-            self.compounds = []
+                return new_compounds
+        except (FileNotFoundError, ValueError, StopIteration):
+            logger.info('No compounds in %s.', self)
+            return []
 
-    @property
-    def returned_cids(self):
-        '''Raw list of CIDs returned by the last PubChem search.'''
-        return self._returned_cids
-
-    @returned_cids.setter
-    def returned_cids(self, cids):
-        self._returned_cids = cids
-
-    def load_returned_cids(self):
+    def get_returned_cids(self):
         '''
         Load the list of CIDs returned by the last PubChem search from file.
         '''
@@ -188,44 +159,28 @@ class CMGroup:
             with open(self._CIDS_FILE, 'r') as json_file:
                 cids = json.load(json_file)
                 logger.info('Loaded existing CIDs list for %s.', self)
-                self.returned_cids = cids
+                return cids
         except (FileNotFoundError, json.JSONDecodeError):
             logger.debug('No existing CIDs found for %s.', self)
-            self.returned_cids = []
+            return []
 
     def save_returned_cids(self, cids):
         '''
         Save the list of CIDs returned by the last PubChem search to file.
         '''
-        logger.debug('Saving search results for %s, containing %i CIDs.',
+        logger.debug('Saving search results for %s containing %i CIDs.',
                      self, len(cids))
-        self.returned_cids = cids
         with open(self._CIDS_FILE, 'w') as json_file:
             json.dump(cids, json_file)
 
-    def clean_json(self):
-        '''Clean up JSON files generated from PubChem search.'''
-        logger.debug('Removing JSON files for %s.', self)
+    def clean_data(self):
+        '''Delete JSON files generated from previous operations.'''
+        logger.debug('Removing data for %s.', self)
         try:
             os.remove(self._CIDS_FILE)
             os.remove(self._COMPOUNDS_FILE)
         except OSError:
-            logger.exception('Failed to delete all JSON files.')
-
-        logger.debug('Resetting group %s.', self)
-        self.compounds = []
-        self.returned_cids = []
-
-    def __len__(self):
-        '''Return the length of the group's internal list of compounds.'''
-        return len(self.compounds)
-
-    def __contains__(self, compound):
-        '''
-        Check if a compound is already in the group's internal list.
-        '''
-        # TO DO: make this match identifiers only, instead of dicts...
-        return compound in self.compounds
+            logger.exception('Failed to delete all files.')
 
     def __repr__(self):
         '''Return a string identifying the object.'''
@@ -238,7 +193,7 @@ class CMGroup:
         params_frame = DataFrame(self._params,
                                  columns=PARAMS_KEYS, index=[0])
         params_frame.set_index('materialid', inplace=True)
-        compounds_frame = DataFrame(self.compounds,
+        compounds_frame = DataFrame(self.get_compounds(),
                                     columns=COMPOUNDS_KEYS)
         if not file_path:
             file_path = os.path.join(RESULTS_PATH,
@@ -289,28 +244,30 @@ class CMGroup:
         self.save_returned_cids(cids)
 
         logger.debug('Clearing ListKey for %s.', self)
-        del self.listkey
+        self.listkey = None
 
-    def update_with_cids(self):
+    def update_from_cids(self):
         '''
         Retrieve information on a list of CIDs and add new ones to the CMG.
         '''
-        if not self.returned_cids:
+        returned_cids = self.get_returned_cids()
+
+        if not returned_cids:
             logger.warning('No CIDs to update %s.', self)
             return None
-        else:
-            logger.info('Updating %s from list of returned CIDS.', self)
 
         try:
-            last_cid = self.compounds[-1]['CID']
-            new_index = self.returned_cids.index(last_cid) + 1
-            cids = self.returned_cids[new_index:]
+            with open(self._COMPOUNDS_FILE, 'r') as cpds_file:
+                lines = JSONLIterator(cpds_file, reverse=True)
+                last_item = lines.next()
+            last_cid = last_item['CID']
+            new_index = returned_cids.index(last_cid) + 1
+            cids = returned_cids[new_index:]
             logger.info('Resuming update of %s; last CID added: %s.',
                         self, last_cid)
-        except (IndexError, ValueError):
-            cids = self.returned_cids
-            logger.info('Starting new update of %s '
-                        'based on PubChem search results.', self)
+        except (FileNotFoundError, ValueError, StopIteration):
+            cids = returned_cids
+            logger.info('Starting update of %s from search results.', self)
 
         logger.info('Looking up details for %i CIDs.', len(cids))
         new = pc.gen_compounds(cids, self.last_updated)
@@ -326,13 +283,6 @@ class CMGroup:
 
         logger.info('Completed PubChem update for %s.', self)
 
-        # Add new compounds to the internal list associated with the CMGroup.
-        # NOTE: right now, this just reads the entire JSONL file into a list
-        # of dicts and overwrites the value of self._compounds.
-        logger.info('Adding %i compounds in total from PubChem search to %s.',
-                    len(new_compounds), self)
-        self.load_compounds()
-
     def pubchem_update(self, wait=10, **kwargs):
         '''
         Perform a PubChem search to update a compound group.
@@ -341,7 +291,7 @@ class CMGroup:
         logger.info('Waiting %i s before retrieving search results.', wait)
         sleep(wait)
         self.retrieve_pubchem_search(**kwargs)
-        self.update_with_cids()
+        self.update_from_cids()
         self.to_excel()
 
     def screen(self, compound):
@@ -370,7 +320,7 @@ def batch_cmg_search(groups, resume_update=False, wait=120, **kwargs):
         logger.info('Completed retrieving all group search results.')
 
     for group in groups:
-        group.update_with_cids()
+        group.update_from_cids()
         group.to_excel()
 
     logger.info('Completed all group updates!')

@@ -3,7 +3,6 @@
 
 import os
 import shutil
-from time import sleep
 from itertools import islice
 
 from .. import cmgroup as cmg
@@ -23,43 +22,38 @@ def test_cmgroup():
         assert group.name == params['name']
 
 
-def test_clean_json():
+def test_clean_data():
     group = cmg.CMGroup(PARAMS_LIST[3])
     shutil.copy(os.path.join(_CUR_PATH, 'cids.json'), group._CIDS_FILE)
     shutil.copy(os.path.join(_CUR_PATH, 'cpds.jsonl'), group._COMPOUNDS_FILE)
-    group = cmg.CMGroup(PARAMS_LIST[3])     # Re-initialize the CMGroup.
-    assert len(group) == 3
-    assert len(group.returned_cids) == 5
-    group.clean_json()
-    assert len(group) == 0
-    assert group.returned_cids == []
-    group.clean_json()
+    assert len(group.get_compounds()) == 3
+    assert len(group.get_returned_cids()) == 5
+    group.clean_data()
+    assert group.get_compounds() == []
+    assert group.get_returned_cids() == []
+    group.clean_data()
 
 
 def test_resume_update():
     group = cmg.CMGroup(PARAMS_LIST[3])
     shutil.copy(os.path.join(_CUR_PATH, 'cids.json'), group._CIDS_FILE)
     shutil.copy(os.path.join(_CUR_PATH, 'cpds.jsonl'), group._COMPOUNDS_FILE)
-    group = cmg.CMGroup(PARAMS_LIST[3])     # Re-initialize the CMGroup.
-    group.update_with_cids()
-    assert len(group) == 5
+    group.update_from_cids()
+    assert len(group.get_compounds()) == 5
 
     # Test what happens when _COMPOUNDS_FILE contains CIDS that are
     # not listed in the _CIDS_FILE. It should append compounds.
     shutil.copy(os.path.join(_CUR_PATH, 'cpds_other.jsonl'),
                 group._COMPOUNDS_FILE)
-    group.load_compounds()
-    group.load_returned_cids()
-    group.update_with_cids()
-    assert len(group) == 8
+    group.update_from_cids()
+    assert len(group.get_compounds()) == 8
 
     # Test what happens when _COMPOUNDS_FILE is absent. In this case
     # It should end up containing all the CIDs in _CIDS_FILE.
-    group.clean_json()
+    group.clean_data()
     shutil.copy(os.path.join(_CUR_PATH, 'cids.json'), group._CIDS_FILE)
-    group.load_returned_cids()
-    group.update_with_cids()
-    assert len(group) == 5
+    group.update_from_cids()
+    assert len(group.get_compounds()) == 5
 
 
 def test_pubchem_update():
@@ -68,7 +62,7 @@ def test_pubchem_update():
     # TODO: Ideally we should also test without any `listkey_count`,
     # i.e. with a search that returns very few results.
     group.pubchem_update(listkey_count=5)
-    assert len(group) > 0
+    assert len(group.get_compounds()) > 0
 
 
 def test_batch_cmg_search():
@@ -78,5 +72,5 @@ def test_batch_cmg_search():
     cmg.batch_cmg_search(groups, wait=30, listkey_count=3)
 
     for group in groups:
-        assert len(group) > 0
-        assert group.compounds[0]['IUPAC_name'] is not None
+        assert len(group.get_compounds()) > 0
+        assert group.get_compounds()[0]['IUPAC_name'] is not None
