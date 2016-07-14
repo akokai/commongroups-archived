@@ -295,14 +295,14 @@ class CMGroup:
         logger.info('Looking up information for %i CIDs.', len(cids))
         new = pc.gen_compounds(cids, self.last_updated)
 
-        with open(self._COMPOUNDS_FILE, 'a') as cpds_file:
-            while True:
-                new_compounds = list(islice(new, 5))
-                if new_compounds == []:
-                    break
+        while True:
+            new_compounds = list(islice(new, 5))
+            if new_compounds == []:
+                break
+            with open(self._COMPOUNDS_FILE, 'a') as cpds_file:
                 for cpd in new_compounds:
                     cpds_file.write(json.dumps(cpd) + '\n')
-                sleep(1)
+            sleep(1)
 
         logger.info('Completed PubChem update for %s.', self)
 
