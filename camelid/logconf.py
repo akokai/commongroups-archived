@@ -14,7 +14,7 @@ _CUR_PATH = os.path.dirname(os.path.abspath(__file__))
 _PARENT_PATH = os.path.dirname(_CUR_PATH)
 LOG_PATH = os.path.join(_PARENT_PATH, 'log')
 mkdir_p(LOG_PATH)
-LOG_FILE_PATH = os.path.join(LOG_PATH, 'metacamel.log')
+LOG_FILE_PATH = os.path.join(LOG_PATH, 'camelid.log')
 
 CONFIG = {
     'version': 1,
@@ -39,27 +39,22 @@ CONFIG = {
         }
     },
     'loggers': {
-        'metacamel': {
+        'camelid': {
             'level': 'DEBUG',
             'handlers': ['console', 'file'],
             'propagate': False
         },
-        'metacamel.googlesheet': {
+        'camelid.googlesheet': {
             'level': 'DEBUG',
             'handlers': ['console', 'file'],
             'propagate': False
         },
-        'metacamel.cmgroup': {
+        'camelid.cmgroup': {
             'level': 'DEBUG',
             'handlers': ['console', 'file'],
             'propagate': False
         },
-        'metacamel.pubchemutils': {
-            'level': 'DEBUG',
-            'handlers': ['console', 'file'],
-            'propagate': False
-        },
-        'metacamel.run': {
+        'camelid.pubchemutils': {
             'level': 'DEBUG',
             'handlers': ['console', 'file'],
             'propagate': False

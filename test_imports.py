@@ -3,9 +3,9 @@
 
 
 def test_imports():
-    import metacamel
-    from metacamel import pubchemutils as pc
-    from metacamel.casrnutils import validate
+    import camelid
+    from camelid import pubchemutils as pc
+    from camelid.casrnutils import validate
 
 
 def main():

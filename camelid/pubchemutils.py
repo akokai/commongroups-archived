@@ -16,7 +16,7 @@ import pubchempy as pcp
 from . import logconf
 from .casrnutils import validate, find_valid
 
-logger = logging.getLogger('metacamel.pubchemutils')
+logger = logging.getLogger(__name__)
 
 PUG_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug'
 PUG_VIEW_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug_view'

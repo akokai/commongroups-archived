@@ -17,7 +17,7 @@ from boltons.jsonutils import JSONLIterator
 from . import logconf
 from . import pubchemutils as pc
 
-logger = logging.getLogger('metacamel.cmgroup')
+logger = logging.getLogger(__name__)
 
 _CUR_PATH = os.path.dirname(os.path.abspath(__file__))
 _PARENT_PATH = os.path.dirname(_CUR_PATH)

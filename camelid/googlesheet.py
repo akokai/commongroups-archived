@@ -28,7 +28,7 @@ from boltons.fileutils import mkdir_p
 from . import logconf
 from .cmgroup import CMGroup
 
-logger = logging.getLogger('metacamel.googlesheet')
+logger = logging.getLogger(__name__)
 
 _CUR_PATH = os.path.dirname(os.path.abspath(__file__))
 _PARENT_PATH = os.path.dirname(_CUR_PATH)

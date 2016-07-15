@@ -9,12 +9,12 @@ import argparse
 import logging
 from itertools import islice
 
-import metacamel.logconf
-import metacamel.cmgroup as cmg
-import metacamel.googlesheet as gs
-import metacamel.pubchemutils as pc
+import camelid.logconf
+import camelid.cmgroup as cmg
+import camelid.googlesheet as gs
+import camelid.pubchemutils as pc
 
-logger = logging.getLogger('metacamel')
+logger = logging.getLogger('camelid')
 
 _CUR_PATH = os.path.dirname(os.path.abspath(__file__))
 _PARENT_PATH = os.path.dirname(_CUR_PATH)
