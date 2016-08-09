@@ -11,24 +11,20 @@ from time import asctime, sleep
 from datetime import date
 
 from pandas import DataFrame, ExcelWriter
-from boltons.fileutils import mkdir_p
 from boltons.jsonutils import JSONLIterator
 
 from . import logconf
 from . import pubchemutils as pc
+from .run_camelid import CamelidEnv
 
 logger = logging.getLogger(__name__)
 
-_CUR_PATH = os.path.dirname(os.path.abspath(__file__))
-_PARENT_PATH = os.path.dirname(_CUR_PATH)
-DATA_PATH = os.path.join(_PARENT_PATH, 'data')
-mkdir_p(DATA_PATH)
-RESULTS_PATH = os.path.join(_PARENT_PATH, 'results')
-mkdir_p(RESULTS_PATH)
-
 # The column headings used for Excel exports of group parameters:
-PARAMS_KEYS = ['materialid', 'name', 'searchtype', 'structtype',
+PARAMS_COLS = ['materialid', 'name', 'searchtype', 'structtype',
                'searchstring', 'last_updated', 'current_update']
+               # 'cpds_count', 'casrn_count']
+               # TODO: add those to export
+
 # The column headings used for Excel exports of compound lists.
 # Most correspond to keys that will be present in compound data dicts
 # returned from PubChem searches. Some are generated upon export.
@@ -44,12 +40,14 @@ EXPORT_COLS = ['CASRN',         # Generated from CASRN_list upon export
 class CMGroup:
     '''Chemical and material group class.'''
 
-    def __init__(self, params):
+    def __init__(self, params, env=None):
         '''
         Initialize from a dict containing all parameters of a compound group.
 
         The dict should contain `materialid`, `name`,` `searchtype`,
         `structtype`, `searchstring`, and `last_updated`. (For now...)
+        The `env` argument is a `CamelidEnv` object representing the current
+        project. If unspecified, a new 'default' project will be created.
         '''
         try:
             self._materialid = params['materialid']
@@ -57,17 +55,21 @@ class CMGroup:
             logger.critical('Cannot initialize CMGroup without materialid.')
             raise
 
+        env = env or CamelidEnv()
+        self._data_path = env.data_path
+        self._results_path = env.results_path
+
         logger.debug('Created %s', self)
 
         self._params = params
         self._listkey = None
 
         # Compounds list is stored in this JSONL file, one dict per line.
-        self._COMPOUNDS_FILE = os.path.join(DATA_PATH,
+        self._compounds_file = os.path.join(self._data_path,
                                             self.materialid + '_cpds.jsonl')
 
         # List of CIDs returned from last PubChem search would be stored here.
-        self._CIDS_FILE = os.path.join(DATA_PATH,
+        self._cids_file = os.path.join(self._data_path,
                                        self.materialid + '_cids.json')
 
         # Determine whether we are checking for new additions to the group.
@@ -149,7 +151,7 @@ class CMGroup:
         Read compounds (list of dicts) from file and store as an attribute.
         '''
         try:
-            with open(self._COMPOUNDS_FILE, 'r') as cpds_file:
+            with open(self._compounds_file, 'r') as cpds_file:
                 lines = JSONLIterator(cpds_file)
                 new_compounds = list(islice(lines, None))
                 logger.debug('Loading %i compounds from JSON for %s.',
@@ -164,7 +166,7 @@ class CMGroup:
         Load the list of CIDs returned by the last PubChem search from file.
         '''
         try:
-            with open(self._CIDS_FILE, 'r') as json_file:
+            with open(self._cids_file, 'r') as json_file:
                 cids = json.load(json_file)
                 logger.debug('Loading search results: %i CIDs for %s.',
                              len(cids), self)
@@ -179,15 +181,15 @@ class CMGroup:
         '''
         logger.debug('Saving search results for %s containing %i CIDs.',
                      self, len(cids))
-        with open(self._CIDS_FILE, 'w') as json_file:
+        with open(self._cids_file, 'w') as json_file:
             json.dump(cids, json_file)
 
     def clean_data(self):
         '''Delete JSON files generated from previous operations.'''
         logger.debug('Removing data for %s.', self)
         try:
-            os.remove(self._CIDS_FILE)
-            os.remove(self._COMPOUNDS_FILE)
+            os.remove(self._cids_file)
+            os.remove(self._compounds_file)
         except OSError:
             logger.exception('Failed to delete all files.')
 
@@ -199,8 +201,9 @@ class CMGroup:
         '''
         Output the list of compounds & parameters to an Excel spreadsheet.
         '''
+        # TODO: add to export: total number of cpds, number with CASRN
         params_frame = DataFrame(self._params,
-                                 columns=PARAMS_KEYS, index=[0])
+                                 columns=PARAMS_COLS, index=[0])
         params_frame.set_index('materialid', inplace=True)
 
         compounds_frame = DataFrame(self.get_compounds(),
@@ -216,8 +219,10 @@ class CMGroup:
 
         compounds_frame.CASRN = compounds_frame.CASRN_list.apply(first_casrn)
 
-        if not file_path:
-            file_path = os.path.join(RESULTS_PATH,
+        if file_path:
+            file_path = os.path.abspath(file_path)
+        else:
+            file_path = os.path.join(self._results_path,
                                      '{0}.xlsx'.format(self.materialid))
 
         logger.info('Writing Excel output to: %s', file_path)
@@ -280,7 +285,7 @@ class CMGroup:
             return None
 
         try:
-            with open(self._COMPOUNDS_FILE, 'r') as cpds_file:
+            with open(self._compounds_file, 'r') as cpds_file:
                 lines = JSONLIterator(cpds_file, reverse=True)
                 last_item = lines.next()
             last_cid = last_item['CID']
@@ -299,7 +304,7 @@ class CMGroup:
             new_compounds = list(islice(new, 5))
             if new_compounds == []:
                 break
-            with open(self._COMPOUNDS_FILE, 'a') as cpds_file:
+            with open(self._compounds_file, 'a') as cpds_file:
                 for cpd in new_compounds:
                     cpds_file.write(json.dumps(cpd) + '\n')
             sleep(1)
@@ -356,7 +361,9 @@ def params_from_json(params_file):
     return params_list
 
 
-def cmgs_from_json(params_file):
-    '''Generate `CMGroup` objects from a JSON file.'''
+def cmgs_from_json(params_file, env):
+    '''
+    Generate `CMGroup` objects from a JSON file, with a given `CamelidEnv`.
+    '''
     for params in params_from_json(params_file):
-        yield CMGroup(params)
+        yield CMGroup(params, env)

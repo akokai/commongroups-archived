@@ -17,25 +17,18 @@ service account client e-mail.
 from __future__ import unicode_literals
 
 import os
+from os.path import join as pjoin
 import logging
 import json
 from itertools import islice
 
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-from boltons.fileutils import mkdir_p
+from oauth2client.service_account import ServiceAccountCredentials as SAC
 
 from . import logconf
 from .cmgroup import CMGroup
 
 logger = logging.getLogger(__name__)
-
-_CUR_PATH = os.path.dirname(os.path.abspath(__file__))
-_PARENT_PATH = os.path.dirname(_CUR_PATH)
-PRIVATE_PATH = os.path.join(_PARENT_PATH, 'private')
-API_JSON = os.path.join(PRIVATE_PATH, 'google-credentials.json')
-DATA_PATH = os.path.join(_PARENT_PATH, 'data')
-mkdir_p(DATA_PATH)
 
 SCOPE = ['https://spreadsheets.google.com/feeds']
 
@@ -44,27 +37,47 @@ PARAMS_COLS = ['materialid', 'name', 'searchtype',
                'structtype', 'searchstring', 'last_updated']
 
 
-def get_spreadsheet():
-    '''Open the group parameters spreadsheet as a `gspread.Spreadsheet`.'''
-    creds = ServiceAccountCredentials.from_json_keyfile_name(API_JSON, SCOPE)
-    logger.debug('Authorizing Google Service Account credentials.')
-    google = gspread.authorize(creds)
-    logger.debug('Opening Google Spreadsheet by title: %s', TITLE)
-    cmg_spreadsheet = google.open(TITLE)
-    return cmg_spreadsheet
+class NoCredentialsError(Exception):
+    '''Raised when there is no Google API credentials file.'''
+    def __init__(self, path):
+        self.path = path
+
+    def __str__(self):
+        msg = 'Google API credentials key file not found: {0}'
+        return msg.format(self.path)
 
 
-def get_params(worksheet):
-    '''Generate dicts of parameters from spreadsheet rows.'''
-    doc = get_spreadsheet()
-    logger.debug('Getting worksheet by title: %s', worksheet)
-    wks = doc.worksheet(worksheet)
+class SheetManager:
+    '''Object to manage Google Sheets access.'''
+    def __init__(self, key_file, worksheet, title=TITLE):
+        if not os.path.exists(key_file):
+            raise NoCredentialsError(key_file)
 
-    for i in range(2, wks.row_count + 1):
-        if wks.cell(i, 1).value in [None, '']:
-            raise StopIteration
-        params = {k: v for (k, v) in zip(PARAMS_COLS, wks.row_values(i))}
-        yield params
+        creds = SAC.from_json_keyfile_name(key_file, SCOPE)
+        logger.debug('Authorizing Google Service Account credentials.')
+        self.google = gspread.authorize(creds)
+        self.title = title
+        self.spreadsheet = None
+        self.worksheet = worksheet
+
+    def get_spreadsheet(self):
+        '''Open the group parameters spreadsheet as a `gspread.Spreadsheet`.'''
+        if not self.spreadsheet:
+            logger.debug('Opening Google Spreadsheet by title: %s', self.title)
+            self.spreadsheet = self.google.open(self.title)
+        return self.spreadsheet
+
+    def get_params(self):
+        '''Generate dicts of parameters from spreadsheet rows.'''
+        doc = self.get_spreadsheet()
+        logger.debug('Getting worksheet by title: %s', self.worksheet)
+        wks = doc.worksheet(self.worksheet)
+
+        for i in range(2, wks.row_count + 1):
+            if wks.cell(i, 1).value in [None, '']:
+                raise StopIteration
+            params = {k: v for (k, v) in zip(PARAMS_COLS, wks.row_values(i))}
+            yield params
 
 
 def get_cmgs(worksheet):
