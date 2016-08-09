@@ -5,7 +5,7 @@ Google Spreadsheet access.
 See the `gspread` docs for instructions on getting OAuth2 credentials for
 Google Drive API access: http://gspread.readthedocs.io/en/latest/index.html
 Make a copy of the service account credentials JSON file in
-`../private/google-credentials.json`.
+`/private/google-credentials.json`.
 
 Notes:
 - Opening by key or by URL in `gspread` is broken by the "New Sheets",
@@ -25,8 +25,8 @@ from itertools import islice
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials as SAC
 
-from . import logconf
-from .cmgroup import CMGroup
+import logconf
+from cmgroup import CMGroup
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,9 @@ class NoCredentialsError(Exception):
 class SheetManager:
     '''Object to manage Google Sheets access.'''
     def __init__(self, key_file, worksheet, title=TITLE):
-        if not os.path.exists(key_file):
+        if key_file is None:
+            raise TypeError('API key file not specified')
+        elif not os.path.exists(key_file):
             raise NoCredentialsError(key_file)
 
         creds = SAC.from_json_keyfile_name(key_file, SCOPE)
@@ -79,24 +81,22 @@ class SheetManager:
             params = {k: v for (k, v) in zip(PARAMS_COLS, wks.row_values(i))}
             yield params
 
+    def get_cmgs(self):
+        '''Generate `CMGroup` objects from parameters in spreadsheet rows.'''
+        logger.debug('Generating CMGs from worksheet: %s', self.worksheet)
 
-def get_cmgs(worksheet):
-    '''Generate `CMGroup` objects from parameters in spreadsheet rows.'''
-    for params in get_params(worksheet):
-        yield CMGroup(params)
+        for params in self.get_params():
+            yield CMGroup(params)
 
+    def params_to_json(self, file=None):
+        '''
+        Get group parameters from the worksheet and output to a JSON file.
+        '''
+        if file is None:
+            raise TypeError('No output file specified')
 
-def params_to_json(worksheet, file_name=None):
-    '''
-    Get group parameters from given worksheet and output to a JSON file.
+        group_params = list(islice(self.get_params(), None))
 
-    A JSON file with the given name will be created in the `data` directory.
-    '''
-    if file_name is None:
-        logger.error('No output file name specified.')
-        raise TypeError
-
-    group_params = list(islice(get_params(worksheet), None))
-
-    with open(file_name, 'w') as params_file:
-        json.dump(group_params, params_file, indent=2, sort_keys=True)
+        file_path = os.path.abspath(file)
+        with open(file_path, 'w') as params_file:
+            json.dump(group_params, params_file, indent=2, sort_keys=True)

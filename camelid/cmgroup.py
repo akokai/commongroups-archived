@@ -13,9 +13,9 @@ from datetime import date
 from pandas import DataFrame, ExcelWriter
 from boltons.jsonutils import JSONLIterator
 
-from . import logconf
-from . import pubchemutils as pc
-from .run_camelid import CamelidEnv
+import logconf
+import pubchemutils as pc
+from run_camelid import CamelidEnv
 
 logger = logging.getLogger(__name__)
 
@@ -244,9 +244,8 @@ class CMGroup:
                 logger.debug('Setting ListKey for %s: %s.', self, key)
                 self.listkey = key
             else:
-                logger.error('Sorry, can only do substructure searches '
-                             'in PubChem at this time.')
-                raise NotImplementedError
+                raise NotImplementedError('Sorry, can only do substructure '
+                                          'searches in PubChem at this time.')
         except KeyError:
             logger.exception('Missing parameters.')
             raise

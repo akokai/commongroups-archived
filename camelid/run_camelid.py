@@ -11,9 +11,9 @@ from itertools import islice
 
 from boltons.fileutils import mkdir_p
 
-import .logconf
-import .cmgroup as cmg
-import .googlesheet as gs
+import logconf
+import cmgroup as cmg
+import googlesheet as gs
 
 logger = logging.getLogger('camelid')
 
@@ -43,7 +43,7 @@ class CamelidEnv:
         log_path = pjoin(self.project_path, 'log')
         os.mkdir(log_path)
         self.log_file = pjoin(log_path, 'camelid.log')
-        camelid.logconf.add_project_handler(self.log_file)
+        logconf.add_project_handler(self.log_file)
         logger.debug('Project path: %s', self.project_path)
 
         # Set up data and results directories.
@@ -69,13 +69,12 @@ class CamelidEnv:
 
     def run(self, args):
         if args.json_file:
-            logger.debug('Getting group parameters from %s',
+            logger.debug('Reading group parameters from %s',
                          self.params_json)
-            cmg_gen = cmg.cmgs_from_json(self.params_json)
+            cmg_gen = cmg.cmgs_from_json(self.params_json, self)
         else:
-            logger.debug('Getting group parameters from worksheet: %s',
-                         self.worksheet)
-            cmg_gen = gs.get_cmgs(self.worksheet)
+            sheet = gs.SheetManager(self.key_file, self.worksheet)
+            cmg_gen = sheet.get_cmgs()
 
         groups = list(islice(cmg_gen, None))
 
@@ -92,8 +91,7 @@ class CamelidEnv:
 
 def create_parser():
     '''Parse arguments for the run script.'''
-    desc = 'Search for compounds belonging to specified ' \
-        'chemical & material groups.'
+    desc = 'Search for compounds belonging to specified chemical classes.'
     parser = argparse.ArgumentParser(description=desc)
 
     parser.add_argument('-e', '--env_path', action='store', type=str,
