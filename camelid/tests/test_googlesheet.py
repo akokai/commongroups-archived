@@ -9,7 +9,7 @@ from os.path import join as pjoin
 from itertools import islice
 
 from camelid import googlesheet as gs
-from camelid.run_camelid import CamelidEnv
+from camelid.run import CamelidEnv
 
 sheet = gs.SheetManager(worksheet='test')
 env = CamelidEnv(project='test')
