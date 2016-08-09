@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''Chemical and material group class definition.'''
+'''Chemical and material group class definition'''
 
 from __future__ import unicode_literals
 
@@ -13,9 +13,8 @@ from datetime import date
 from pandas import DataFrame, ExcelWriter
 from boltons.jsonutils import JSONLIterator
 
-import logconf
-import pubchemutils as pc
-from run_camelid import CamelidEnv
+from camelid import logconf
+from camelid import pubchemutils as pc
 
 logger = logging.getLogger(__name__)
 
@@ -39,23 +38,21 @@ EXPORT_COLS = ['CASRN',         # Generated from CASRN_list upon export
 
 class CMGroup:
     '''Chemical and material group class.'''
-
-    def __init__(self, params, env=None):
+    def __init__(self, params, env):
         '''
         Initialize from a dict containing all parameters of a compound group.
 
         The dict should contain `materialid`, `name`,` `searchtype`,
         `structtype`, `searchstring`, and `last_updated`. (For now...)
         The `env` argument is a `CamelidEnv` object representing the current
-        project. If unspecified, a new 'default' project will be created.
+        project.
         '''
         try:
             self._materialid = params['materialid']
         except KeyError:
-            logger.critical('Cannot initialize CMGroup without materialid.')
+            logger.critical('Cannot initialize CMGroup without materialid')
             raise
 
-        env = env or CamelidEnv()
         self._data_path = env.data_path
         self._results_path = env.results_path
 
@@ -78,8 +75,8 @@ class CMGroup:
                          self._params['last_updated'].split('-')]
             self._last_updated = date(*date_args)
         except (KeyError, TypeError, ValueError):
-            logger.info('No date or invalid date format for %s. '
-                        'Updates will retrieve all search results.', self)
+            logger.info('No date or invalid date format for %s: '
+                        'updates will retrieve all search results', self)
             self._last_updated = None
 
         # Track date of current update for this session.
@@ -154,11 +151,11 @@ class CMGroup:
             with open(self._compounds_file, 'r') as cpds_file:
                 lines = JSONLIterator(cpds_file)
                 new_compounds = list(islice(lines, None))
-                logger.debug('Loading %i compounds from JSON for %s.',
+                logger.debug('Loading %i compounds from JSON for %s',
                              len(new_compounds), self)
                 return new_compounds
         except (FileNotFoundError, ValueError, StopIteration):
-            logger.debug('No compounds in %s.', self)
+            logger.debug('No compounds in %s', self)
             return []
 
     def get_returned_cids(self):
@@ -168,30 +165,30 @@ class CMGroup:
         try:
             with open(self._cids_file, 'r') as json_file:
                 cids = json.load(json_file)
-                logger.debug('Loading search results: %i CIDs for %s.',
+                logger.debug('Loading search results: %i CIDs for %s',
                              len(cids), self)
                 return cids
         except (FileNotFoundError, json.JSONDecodeError):
-            logger.debug('No existing CIDs found for %s.', self)
+            logger.debug('No existing CIDs found for %s', self)
             return []
 
     def save_returned_cids(self, cids):
         '''
         Save the list of CIDs returned by the last PubChem search to file.
         '''
-        logger.debug('Saving search results for %s containing %i CIDs.',
+        logger.debug('Saving search results for %s containing %i CIDs',
                      self, len(cids))
         with open(self._cids_file, 'w') as json_file:
             json.dump(cids, json_file)
 
     def clean_data(self):
         '''Delete JSON files generated from previous operations.'''
-        logger.debug('Removing data for %s.', self)
+        logger.debug('Removing data for %s', self)
         try:
             os.remove(self._cids_file)
             os.remove(self._compounds_file)
         except OSError:
-            logger.exception('Failed to delete all files.')
+            logger.exception('Failed to delete all files')
 
     def __repr__(self):
         '''Return a string identifying the object.'''
@@ -237,17 +234,17 @@ class CMGroup:
         '''
         try:
             if self.searchtype == 'substructure':
-                logger.info('Initiating PubChem substructure search for %s.',
+                logger.info('Initiating PubChem substructure search for %s',
                             self)
                 key = pc.init_substruct_search(self.searchstring,
                                                method=self.structtype)
-                logger.debug('Setting ListKey for %s: %s.', self, key)
+                logger.debug('Setting ListKey for %s: %s', self, key)
                 self.listkey = key
             else:
                 raise NotImplementedError('Sorry, can only do substructure '
-                                          'searches in PubChem at this time.')
+                                          'searches in PubChem at this time')
         except KeyError:
-            logger.exception('Missing parameters.')
+            logger.exception('Missing parameters')
             raise
 
     def retrieve_pubchem_search(self, **kwargs):
@@ -255,10 +252,10 @@ class CMGroup:
         Retrieve results from a previously-initiated async PubChem search.
         '''
         if not self.listkey:
-            logger.error('No existing ListKey to retrieve search results.')
+            logger.error('No existing ListKey to retrieve search results')
             return None     # Raise an exception instead?
 
-        logger.info('Retrieving PubChem search results for %s.', self)
+        logger.info('Retrieving PubChem search results for %s', self)
 
         listkey_args = pc.filter_listkey_args(**kwargs) if kwargs else None
 
@@ -270,7 +267,7 @@ class CMGroup:
         # This sets `self.returned_cids` and also saves the list to JSON.
         self.save_returned_cids(cids)
 
-        logger.debug('Clearing ListKey for %s.', self)
+        logger.debug('Clearing ListKey for %s', self)
         self.listkey = None
 
     def update_from_cids(self):
@@ -280,7 +277,7 @@ class CMGroup:
         returned_cids = self.get_returned_cids()
 
         if not returned_cids:
-            logger.warning('No CIDs to update %s.', self)
+            logger.warning('No CIDs to update %s', self)
             return None
 
         try:
@@ -290,13 +287,13 @@ class CMGroup:
             last_cid = last_item['CID']
             new_index = returned_cids.index(last_cid) + 1
             cids = returned_cids[new_index:]
-            logger.info('Resuming update of %s; last CID added: %s.',
+            logger.info('Resuming update of %s; last CID added: %s',
                         self, last_cid)
         except (FileNotFoundError, ValueError, StopIteration):
             cids = returned_cids
-            logger.info('Starting update of %s from search results.', self)
+            logger.info('Starting update of %s from search results', self)
 
-        logger.info('Looking up information for %i CIDs.', len(cids))
+        logger.info('Looking up information for %i CIDs', len(cids))
         new = pc.gen_compounds(cids, self.last_updated)
 
         while True:
@@ -308,14 +305,14 @@ class CMGroup:
                     cpds_file.write(json.dumps(cpd) + '\n')
             sleep(1)
 
-        logger.info('Completed PubChem update for %s.', self)
+        logger.info('Completed PubChem update for %s', self)
 
     def pubchem_update(self, wait=10, **kwargs):
         '''
         Perform a PubChem search to update a compound group.
         '''
         self.init_pubchem_search()
-        logger.info('Waiting %i s before retrieving search results.', wait)
+        logger.info('Waiting %i s before retrieving search results', wait)
         sleep(wait)
         self.retrieve_pubchem_search(**kwargs)
         self.update_from_cids()
@@ -338,13 +335,13 @@ def batch_cmg_search(groups, resume_update=False, wait=120, **kwargs):
         for group in groups:
             group.init_pubchem_search()
 
-        logger.info('Waiting %i s before retrieving search results.', wait)
+        logger.info('Waiting %i s before retrieving search results', wait)
         sleep(wait)
 
         for group in groups:
             group.retrieve_pubchem_search(**kwargs)
 
-        logger.info('Completed retrieving all group search results.')
+        logger.info('Completed retrieving all group search results')
 
     for group in groups:
         group.update_from_cids()
@@ -360,9 +357,10 @@ def params_from_json(params_file):
     return params_list
 
 
-def cmgs_from_json(params_file, env):
+def cmgs_from_json(env):
     '''
     Generate `CMGroup` objects from a JSON file, with a given `CamelidEnv`.
     '''
-    for params in params_from_json(params_file):
+    logger.debug('Reading group parameters from %s', env.params_json)
+    for params in params_from_json(env.params_json):
         yield CMGroup(params, env)

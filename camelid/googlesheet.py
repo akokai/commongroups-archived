@@ -2,10 +2,12 @@
 '''
 Google Spreadsheet access.
 
-See the `gspread` docs for instructions on getting OAuth2 credentials for
-Google Drive API access: http://gspread.readthedocs.io/en/latest/index.html
-Make a copy of the service account credentials JSON file in
-`/private/google-credentials.json`.
+Setup:
+- See the `gspread` docs for instructions on getting OAuth2 credentials for
+  Google Drive API access: http://gspread.readthedocs.io/en/latest/index.html
+- Download a JSON file containing your Google service account credentials.
+  You must specify the path to this file when creating a `SheetManager` or
+  have it specified in the environment variable `CAMELID_KEYFILE`.
 
 Notes:
 - Opening by key or by URL in `gspread` is broken by the "New Sheets",
@@ -17,7 +19,6 @@ service account client e-mail.
 from __future__ import unicode_literals
 
 import os
-from os.path import join as pjoin
 import logging
 import json
 from itertools import islice
@@ -25,14 +26,15 @@ from itertools import islice
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials as SAC
 
-import logconf
-from cmgroup import CMGroup
+from camelid import logconf
+from camelid.cmgroup import CMGroup
 
 logger = logging.getLogger(__name__)
 
 SCOPE = ['https://spreadsheets.google.com/feeds']
 
 TITLE = 'CMG parameters'
+DEFAULT_WORKSHEET = 'new CMGs'
 PARAMS_COLS = ['materialid', 'name', 'searchtype',
                'structtype', 'searchstring', 'last_updated']
 
@@ -40,6 +42,7 @@ PARAMS_COLS = ['materialid', 'name', 'searchtype',
 class NoCredentialsError(Exception):
     '''Raised when there is no Google API credentials file.'''
     def __init__(self, path):
+        super().__init__(self)
         self.path = path
 
     def __str__(self):
@@ -49,18 +52,24 @@ class NoCredentialsError(Exception):
 
 class SheetManager:
     '''Object to manage Google Sheets access.'''
-    def __init__(self, key_file, worksheet, title=TITLE):
-        if key_file is None:
-            raise TypeError('API key file not specified')
-        elif not os.path.exists(key_file):
+    def __init__(self, key_file=None, worksheet=None, title=TITLE):
+        if key_file:
+            _key_file = os.path.abspath(key_file)
+        elif os.getenv('CAMELID_KEYFILE'):
+            _key_file = os.path.abspath(os.getenv('CAMELID_KEYFILE'))
+        else:
             raise NoCredentialsError(key_file)
 
-        creds = SAC.from_json_keyfile_name(key_file, SCOPE)
+        try:
+            creds = SAC.from_json_keyfile_name(_key_file, SCOPE)
+        except FileNotFoundError:
+            raise NoCredentialsError(_key_file)
+
         logger.debug('Authorizing Google Service Account credentials.')
         self.google = gspread.authorize(creds)
         self.title = title
         self.spreadsheet = None
-        self.worksheet = worksheet
+        self.worksheet = worksheet or DEFAULT_WORKSHEET
 
     def get_spreadsheet(self):
         '''Open the group parameters spreadsheet as a `gspread.Spreadsheet`.'''
@@ -81,12 +90,16 @@ class SheetManager:
             params = {k: v for (k, v) in zip(PARAMS_COLS, wks.row_values(i))}
             yield params
 
-    def get_cmgs(self):
-        '''Generate `CMGroup` objects from parameters in spreadsheet rows.'''
+    def get_cmgs(self, env):
+        '''
+        Generate `CMGroup` objects from parameters in spreadsheet rows.
+
+        The resulting `CMGroup`s will be based in project environment `env`.
+        '''
         logger.debug('Generating CMGs from worksheet: %s', self.worksheet)
 
         for params in self.get_params():
-            yield CMGroup(params)
+            yield CMGroup(params, env)
 
     def params_to_json(self, file=None):
         '''

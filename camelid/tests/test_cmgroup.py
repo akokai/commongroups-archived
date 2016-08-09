@@ -5,27 +5,29 @@ import os
 import shutil
 from itertools import islice
 
-from .. import cmgroup as cmg
+from camelid.run_camelid import CamelidEnv
+from camelid import cmgroup as cmg
 
-_CUR_PATH = os.path.dirname(os.path.abspath(__file__))
-_PARENT_PATH = os.path.dirname(_CUR_PATH)
-DATA_PATH = os.path.join(os.path.dirname(_PARENT_PATH), 'data')
-PARAMS_JSON = os.path.join(_CUR_PATH, 'group_params.json')
-
+# Locate the test params to use.
+_CUR_PATH = os.path.abspath(os.path.dirname(__file__))
+PARAMS_JSON = os.path.join(_CUR_PATH, 'params.json')
 PARAMS_LIST = cmg.params_from_json(PARAMS_JSON)
+
+env = CamelidEnv(project='test')
+shutil.copy(PARAMS_JSON, env.params_json)
 
 
 def test_cmgroup():
     for params in PARAMS_LIST:
-        group = cmg.CMGroup(params)
+        group = cmg.CMGroup(params, env)
         assert group.materialid == params['materialid']
         assert group.name == params['name']
 
 
 def test_clean_data():
-    group = cmg.CMGroup(PARAMS_LIST[3])
-    shutil.copy(os.path.join(_CUR_PATH, 'cids.json'), group._CIDS_FILE)
-    shutil.copy(os.path.join(_CUR_PATH, 'cpds.jsonl'), group._COMPOUNDS_FILE)
+    group = cmg.CMGroup(PARAMS_LIST[3], env)
+    shutil.copy(os.path.join(_CUR_PATH, 'cids.json'), group._cids_file)
+    shutil.copy(os.path.join(_CUR_PATH, 'cpds.jsonl'), group._compounds_file)
     assert len(group.get_compounds()) == 3
     assert len(group.get_returned_cids()) == 5
     group.clean_data()
@@ -35,29 +37,29 @@ def test_clean_data():
 
 
 def test_resume_update():
-    group = cmg.CMGroup(PARAMS_LIST[3])
-    shutil.copy(os.path.join(_CUR_PATH, 'cids.json'), group._CIDS_FILE)
-    shutil.copy(os.path.join(_CUR_PATH, 'cpds.jsonl'), group._COMPOUNDS_FILE)
+    group = cmg.CMGroup(PARAMS_LIST[3], env)
+    shutil.copy(os.path.join(_CUR_PATH, 'cids.json'), group._cids_file)
+    shutil.copy(os.path.join(_CUR_PATH, 'cpds.jsonl'), group._compounds_file)
     group.update_from_cids()
     assert len(group.get_compounds()) == 5
 
-    # Test what happens when _COMPOUNDS_FILE contains CIDS that are
-    # not listed in the _CIDS_FILE. It should append compounds.
+    # Test what happens when _compounds_file contains CIDS that are
+    # not listed in the _cids_file. It should append compounds.
     shutil.copy(os.path.join(_CUR_PATH, 'cpds_other.jsonl'),
-                group._COMPOUNDS_FILE)
+                group._compounds_file)
     group.update_from_cids()
     assert len(group.get_compounds()) == 8
 
-    # Test what happens when _COMPOUNDS_FILE is absent. In this case
-    # It should end up containing all the CIDs in _CIDS_FILE.
+    # Test what happens when _compounds_file is absent. In this case
+    # It should end up containing all the CIDs in _cids_file.
     group.clean_data()
-    shutil.copy(os.path.join(_CUR_PATH, 'cids.json'), group._CIDS_FILE)
+    shutil.copy(os.path.join(_CUR_PATH, 'cids.json'), group._cids_file)
     group.update_from_cids()
     assert len(group.get_compounds()) == 5
 
 
 def test_pubchem_update():
-    group = cmg.CMGroup(PARAMS_LIST[0])
+    group = cmg.CMGroup(PARAMS_LIST[0], env)
     # To save time, only retrieve the first 5 CIDs.
     # TODO: Ideally we should also test without any `listkey_count`,
     # i.e. with a search that returns very few results.
@@ -66,7 +68,7 @@ def test_pubchem_update():
 
 
 def test_batch_cmg_search():
-    groups = list(islice(cmg.cmgs_from_json(PARAMS_JSON), None))
+    groups = list(islice(cmg.cmgs_from_json(env), None))
 
     # To save time, only retrieve the first 3 CIDs.
     cmg.batch_cmg_search(groups, wait=30, listkey_count=3)

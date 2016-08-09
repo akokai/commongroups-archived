@@ -7,20 +7,20 @@ import os
 from os.path import join as pjoin
 import logging
 import argparse
+from datetime import datetime
 from itertools import islice
 
 from boltons.fileutils import mkdir_p
 
-import logconf
-import cmgroup as cmg
-import googlesheet as gs
+from camelid import logconf
+from camelid import cmgroup as cmg
+from camelid import googlesheet as gs
 
 logger = logging.getLogger('camelid')
 
 
 class CamelidEnv:
     '''Run environment for camelid. Prefers desert or alpine habitat.'''
-
     def __init__(self,
                  env_path=None,
                  project=None,
@@ -41,39 +41,32 @@ class CamelidEnv:
 
         # Set up per-project logging to file.
         log_path = pjoin(self.project_path, 'log')
-        os.mkdir(log_path)
-        self.log_file = pjoin(log_path, 'camelid.log')
+        mkdir_p(log_path)
+        log_file = datetime.now().strftime('%Y%m%dT%H%M%S') + '.log'
+        self.log_file = pjoin(log_path, log_file)
         logconf.add_project_handler(self.log_file)
         logger.debug('Project path: %s', self.project_path)
 
         # Set up data and results directories.
         self.data_path = pjoin(self.project_path, 'data')
-        os.mkdir(self.data_path)
+        mkdir_p(self.data_path)
         self.results_path = pjoin(self.project_path, 'results')
-        os.mkdir(self.results_path)
+        mkdir_p(self.results_path)
 
         # Set file path to look for parameters in JSON format.
         self.params_json = pjoin(self.project_path, 'params.json')
 
         # Store path to Google API credentials file.
-        if key_file:
-            self.key_file = os.path.abspath(key_file)
-        elif os.getenv('CAMELID_KEY_FILE'):
-            self.key_file = os.path.abspath(os.getenv('CAMELID_KEY_FILE'))
-        else:
-            self.key_file = pjoin(self.project_path,
-                                  'private', 'google-credentials.json')
+        self._key_file = key_file
 
         # Set worksheet to look for parameters in Google Sheet.
-        self.worksheet = worksheet or 'new CMGs'
+        self.worksheet = worksheet
 
     def run(self, args):
         if args.json_file:
-            logger.debug('Reading group parameters from %s',
-                         self.params_json)
-            cmg_gen = cmg.cmgs_from_json(self.params_json, self)
+            cmg_gen = cmg.cmgs_from_json(self)
         else:
-            sheet = gs.SheetManager(self.key_file, self.worksheet)
+            sheet = gs.SheetManager(self._key_file, self.worksheet)
             cmg_gen = sheet.get_cmgs()
 
         groups = list(islice(cmg_gen, None))

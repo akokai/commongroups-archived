@@ -62,7 +62,8 @@ logging.config.dictConfig(CONFIG)
 def add_project_handler(project_log_file):
     loggers = list(CONFIG['loggers'].keys())
     proj_handler = logging.FileHandler(project_log_file, mode='w')
-    proj_handler.setFormatter(loggers[0].handlers[0].formatter)
+    fmt = logging.getLogger(loggers[0]).handlers[0].formatter
+    proj_handler.setFormatter(fmt)
     for item in loggers:
         lgr = logging.getLogger(item)
         lgr.addHandler(proj_handler)
