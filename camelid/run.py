@@ -4,10 +4,11 @@
 from __future__ import unicode_literals
 
 import os
-from os.path import join as pjoin
 import logging
 import argparse
+from os.path import join as pjoin
 from datetime import datetime
+from glob import iglob
 from itertools import islice
 
 from boltons.fileutils import mkdir_p
@@ -40,10 +41,10 @@ class CamelidEnv:
         mkdir_p(self.project_path)
 
         # Set up per-project logging to file.
-        log_path = pjoin(self.project_path, 'log')
-        mkdir_p(log_path)
+        self.log_path = pjoin(self.project_path, 'log')
+        mkdir_p(self.log_path)
         log_file = datetime.now().strftime('%Y%m%dT%H%M%S') + '.log'
-        self.log_file = pjoin(log_path, log_file)
+        self.log_file = pjoin(self.log_path, log_file)
         logconf.add_project_handler(self.log_file)
         logger.debug('Project path: %s', self.project_path)
 
@@ -62,6 +63,10 @@ class CamelidEnv:
         # Set worksheet to look for parameters in Google Sheet.
         self.worksheet = worksheet
 
+    def clean_logs(self):
+        for item in iglob(pjoin(self.log_path, '*.log')):
+            os.remove(item)
+
     def run(self, args):
         if args.json_file:
             cmg_gen = cmg.cmgs_from_json(self)
@@ -74,6 +79,7 @@ class CamelidEnv:
         if args.clean_start:
             for group in groups:
                 group.clean_data()
+            self.clean_logs()
 
         logger.debug('Starting batch CMG update process.')
         try:
