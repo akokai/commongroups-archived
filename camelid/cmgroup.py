@@ -18,11 +18,10 @@ from camelid import pubchemutils as pc
 
 logger = logging.getLogger(__name__)
 
-# The column headings used for Excel exports of group parameters:
+# The column headings used for Excel exports of group information:
 PARAMS_COLS = ['materialid', 'name', 'searchtype', 'structtype',
-               'searchstring', 'last_updated', 'current_update']
-               # 'cpds_count', 'casrn_count']
-               # TODO: add those to export
+               'searchstring', 'last_updated', 'current_update',
+               'num_compounds', 'num_casrn']
 
 # The column headings used for Excel exports of compound lists.
 # Most correspond to keys that will be present in compound data dicts
@@ -79,10 +78,7 @@ class CMGroup:
                         'updates will retrieve all search results', self)
             self._last_updated = None
 
-        # Track date of current update for this session.
-        # Could potentially result in missed CIDs, if the update process lasts
-        # > 1 day and some new compounds are added to PubChem in the meantime.
-        self._params.update({'current_update': date.today().isoformat()})
+        self._params['current_update'] = None
 
     @property
     def materialid(self):
@@ -198,7 +194,6 @@ class CMGroup:
         '''
         Output the list of compounds & parameters to an Excel spreadsheet.
         '''
-        # TODO: add to export: total number of cpds, number with CASRN
         params_frame = DataFrame(self._params,
                                  columns=PARAMS_COLS, index=[0])
         params_frame.set_index('materialid', inplace=True)
@@ -212,9 +207,13 @@ class CMGroup:
             if casrns:
                 return casrns.split()[0]
             else:
-                return ''
+                return None
 
         compounds_frame.CASRN = compounds_frame.CASRN_list.apply(first_casrn)
+
+        # Count the number of compounds and the number with CASRN.
+        params_frame.num_compounds = len(compounds_frame)
+        params_frame.num_casrn = compounds_frame.CASRN.count()
 
         if file_path:
             file_path = os.path.abspath(file_path)
@@ -240,6 +239,9 @@ class CMGroup:
                                                method=self.structtype)
                 logger.debug('Setting ListKey for %s: %s', self, key)
                 self.listkey = key
+                # Track date of current update:
+                self._params.update(
+                    {'current_update': date.today().isoformat()})
             else:
                 raise NotImplementedError('Sorry, can only do substructure '
                                           'searches in PubChem at this time')
