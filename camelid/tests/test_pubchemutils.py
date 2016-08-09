@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-'''Unit tests for PubChem API usage.'''
+"""Unit tests for PubChem API usage."""
 
 from itertools import islice
 from datetime import date
 
-from camelid import pubchemutils as pc
+from .. import pubchemutils as pc
 
 CIDS_WITH_CAS = [311, 2244]
 # The following might need to be changed if CASRNS are eventually added

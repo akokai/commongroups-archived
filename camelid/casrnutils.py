@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''Functions for dealing with CAS Registry Numbers (CASRN).'''
+"""Functions for dealing with CAS Registry Numbers (CASRN)."""
 
 from __future__ import unicode_literals
 from builtins import str
@@ -9,7 +9,7 @@ import numpy as np
 
 
 def validate(casrn, boolean=False):
-    '''
+    """
     Check the validity of a CASRN using the check digit.
 
     Returns cleaned CASRN as `unicode` (`str`), or `None` if invalid.
@@ -18,7 +18,7 @@ def validate(casrn, boolean=False):
     Input can be `str`, `unicode`, or `int`. Non-numeric characters
     are ignored. Based on CAS documentation:
     https://www.cas.org/content/chemical-substances/checkdig
-    '''
+    """
     casrn = str(casrn)
     nums_regex = re.compile(r'\d+')
     nums = ''.join(nums_regex.findall(casrn))
@@ -37,7 +37,7 @@ def validate(casrn, boolean=False):
 
 
 def find_valid(string):
-    '''Find all valid CASRNs in a string.'''
+    """Find all valid CASRNs in a string."""
     casrn_regex = re.compile(r'(\d{2,7})[-–—](\d{2})[-–—]\d')
     found = [validate(i.group()) for i in casrn_regex.finditer(string)]
     return [x for x in found if x is not None]

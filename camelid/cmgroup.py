@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''Chemical and material group class definition'''
+"""Chemical and material group class definition"""
 
 from __future__ import unicode_literals
 
@@ -13,8 +13,8 @@ from datetime import date
 from pandas import DataFrame, ExcelWriter
 from boltons.jsonutils import JSONLIterator
 
-from camelid import logconf
-from camelid import pubchemutils as pc
+from . import logconf
+from . import pubchemutils as pc
 
 logger = logging.getLogger(__name__)
 
@@ -35,17 +35,17 @@ EXPORT_COLS = ['CASRN',         # Generated from CASRN_list upon export
                'creation_date']
 
 
-class CMGroup:
-    '''Chemical and material group class.'''
+class CMGroup(object):
+    """Chemical and material group class."""
     def __init__(self, params, env):
-        '''
+        """
         Initialize from a dict containing all parameters of a compound group.
 
         The dict should contain `materialid`, `name`,` `searchtype`,
         `structtype`, `searchstring`, and `last_updated`. (For now...)
         The `env` argument is a `CamelidEnv` object representing the current
         project.
-        '''
+        """
         try:
             self._materialid = params['materialid']
         except KeyError:
@@ -82,57 +82,57 @@ class CMGroup:
 
     @property
     def materialid(self):
-        '''The numeric ID of the chemical/material group.'''
+        """The numeric ID of the chemical/material group."""
         return self._materialid
 
     @property
     def name(self):
-        '''The name of the chemical/material group.'''
+        """The name of the chemical/material group."""
         if 'name' in self._params:
             return self._params['name']
 
     @property
     def searchtype(self):
-        '''
+        """
         The type of structure-based search used to define this group.
 
         Currently only `substructure` is of any use.
-        '''
+        """
         if 'searchtype' in self._params:
             return self._params['searchtype']
 
     @property
     def structtype(self):
-        '''
+        """
         The form of structure notation used for searching, e.g. `smiles`.
 
         Currently only works with `smiles`.
-        '''
+        """
         if 'structtype' in self._params:
             return self._params['structtype']
 
     @property
     def searchstring(self):
-        '''
+        """
         Query for structure-based searches, e.g. a string in SMILES notation.
-        '''
+        """
         if 'searchstring' in self._params:
             return self._params['searchstring']
 
     @property
     def last_updated(self):
-        '''
+        """
         When the group was last updated, according to the supplied parameters.
 
         This property is either a python `datetime.date` object, or `None`.
         Note that `datetime.date` can't be serialized to JSON or Excel
         without first converting to string.
-        '''
+        """
         return self._last_updated
 
     @property
     def listkey(self):
-        '''Temporary ListKey for asynchronous PubChem searches.'''
+        """Temporary ListKey for asynchronous PubChem searches."""
         return self._listkey
 
     @listkey.setter
@@ -140,9 +140,9 @@ class CMGroup:
         self._listkey = new_listkey
 
     def get_compounds(self):
-        '''
+        """
         Read compounds (list of dicts) from file and store as an attribute.
-        '''
+        """
         try:
             with open(self._compounds_file, 'r') as cpds_file:
                 lines = JSONLIterator(cpds_file)
@@ -155,9 +155,9 @@ class CMGroup:
             return []
 
     def get_returned_cids(self):
-        '''
+        """
         Load the list of CIDs returned by the last PubChem search from file.
-        '''
+        """
         try:
             with open(self._cids_file, 'r') as json_file:
                 cids = json.load(json_file)
@@ -169,16 +169,16 @@ class CMGroup:
             return []
 
     def save_returned_cids(self, cids):
-        '''
+        """
         Save the list of CIDs returned by the last PubChem search to file.
-        '''
+        """
         logger.debug('Saving search results for %s containing %i CIDs',
                      self, len(cids))
         with open(self._cids_file, 'w') as json_file:
             json.dump(cids, json_file)
 
     def clear_data(self):
-        '''Delete JSON files generated from previous operations.'''
+        """Delete JSON files generated from previous operations."""
         logger.debug('Removing data for %s', self)
         try:
             os.remove(self._cids_file)
@@ -187,13 +187,13 @@ class CMGroup:
             logger.exception('Failed to delete all files')
 
     def __repr__(self):
-        '''Return a string identifying the object.'''
+        """Return a string identifying the object."""
         return 'CMGroup({0})'.format(self.materialid)
 
     def to_excel(self, file_path=None):
-        '''
+        """
         Output the list of compounds & parameters to an Excel spreadsheet.
-        '''
+        """
         params_frame = DataFrame(self._params,
                                  columns=PARAMS_COLS, index=[0])
         params_frame.set_index('materialid', inplace=True)
@@ -228,9 +228,9 @@ class CMGroup:
             compounds_frame.to_excel(writer, sheet_name='Compounds')
 
     def init_pubchem_search(self):
-        '''
+        """
         Initiate an async PubChem structure-based search and save the ListKey.
-        '''
+        """
         try:
             if self.searchtype == 'substructure':
                 logger.info('Initiating PubChem substructure search for %s',
@@ -250,9 +250,9 @@ class CMGroup:
             raise
 
     def retrieve_pubchem_search(self, **kwargs):
-        '''
+        """
         Retrieve results from a previously-initiated async PubChem search.
-        '''
+        """
         if not self.listkey:
             logger.error('No existing ListKey to retrieve search results')
             return None     # Raise an exception instead?
@@ -273,9 +273,9 @@ class CMGroup:
         self.listkey = None
 
     def update_from_cids(self):
-        '''
+        """
         Retrieve information on a list of CIDs and add new ones to the CMG.
-        '''
+        """
         returned_cids = self.get_returned_cids()
 
         if not returned_cids:
@@ -310,9 +310,9 @@ class CMGroup:
         logger.info('Completed PubChem update for %s', self)
 
     def pubchem_update(self, wait=10, **kwargs):
-        '''
+        """
         Perform a PubChem search to update a compound group.
-        '''
+        """
         self.init_pubchem_search()
         logger.info('Waiting %i s before retrieving search results', wait)
         sleep(wait)
@@ -321,7 +321,7 @@ class CMGroup:
         self.to_excel()
 
     def screen(self, compound):
-        '''Screen a new compound for membership in the group.'''
+        """Screen a new compound for membership in the group."""
         # TODO: Placeholder!
         if compound in self.get_compounds():
             return True
@@ -330,9 +330,9 @@ class CMGroup:
 
 
 def batch_cmg_search(groups, resume_update=False, wait=120, **kwargs):
-    '''
+    """
     Perform PubChem searches for many CMGs and output to Excel files.
-    '''
+    """
     if not resume_update:
         for group in groups:
             group.init_pubchem_search()
@@ -353,16 +353,16 @@ def batch_cmg_search(groups, resume_update=False, wait=120, **kwargs):
 
 
 def params_from_json(params_file):
-    '''Load a list of group parameters from a JSON file.'''
+    """Load a list of group parameters from a JSON file."""
     with open(params_file, 'r') as json_file:
         params_list = json.load(json_file)
     return params_list
 
 
 def cmgs_from_json(env):
-    '''
+    """
     Generate `CMGroup` objects from a JSON file, with a given `CamelidEnv`.
-    '''
+    """
     logger.debug('Reading group parameters from %s', env.params_json)
     for params in params_from_json(env.params_json):
         yield CMGroup(params, env)

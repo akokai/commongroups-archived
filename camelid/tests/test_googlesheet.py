@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Unit tests for Google Spreadsheet access.
 
 For these tests to work, follow the setup instructions in `googlesheet.py`.
-'''
+"""
 
 from os.path import join as pjoin
 from itertools import islice
 
-from camelid import googlesheet as gs
-from camelid.run import CamelidEnv
+from .. import googlesheet as gs
+from ..run import CamelidEnv
 
 sheet = gs.SheetManager(worksheet='test')
 env = CamelidEnv(project='test')

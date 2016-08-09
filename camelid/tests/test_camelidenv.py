@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-'''Unit tests for camelid run environment.'''
+"""Unit tests for camelid run environment."""
 
 import os
 
-from camelid.run import CamelidEnv
+from ..run import CamelidEnv
 
 
 def test_camelidenv():

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''Logging configuration for camelid.'''
+"""Logging configuration for camelid."""
 
 from __future__ import unicode_literals
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''Automatically update chemical & material groups.'''
+"""Automatically update chemical & material groups."""
 
 from __future__ import unicode_literals
 
@@ -13,15 +13,15 @@ from itertools import islice
 
 from boltons.fileutils import mkdir_p
 
-from camelid import logconf
-from camelid import cmgroup as cmg
-from camelid import googlesheet as gs
+from . import logconf
+from . import cmgroup as cmg
+from . import googlesheet as gs
 
 logger = logging.getLogger('camelid')
 
 
-class CamelidEnv:
-    '''Run environment for camelid. Prefers desert or alpine habitat.'''
+class CamelidEnv(object):
+    """Run environment for camelid. Prefers desert or alpine habitat."""
     def __init__(self,
                  env_path=None,
                  project=None,
@@ -92,7 +92,7 @@ class CamelidEnv:
 
 
 def create_parser():
-    '''Parse arguments for the run script.'''
+    """Parse arguments for the run script."""
     desc = 'Search for compounds belonging to specified chemical classes.'
     parser = argparse.ArgumentParser(description=desc)
 

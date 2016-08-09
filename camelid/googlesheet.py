@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Google Spreadsheet access.
 
 Setup:
@@ -14,7 +14,7 @@ Notes:
 but opening by title seems to work.
 - Don't forget to share the relevant Google Spreadsheet with your Google
 service account client e-mail.
-'''
+"""
 
 from __future__ import unicode_literals
 
@@ -26,8 +26,8 @@ from itertools import islice
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials as SAC
 
-from camelid import logconf
-from camelid.cmgroup import CMGroup
+from . import logconf
+from .cmgroup import CMGroup
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ PARAMS_COLS = ['materialid', 'name', 'searchtype',
 
 
 class NoCredentialsError(Exception):
-    '''Raised when there is no Google API credentials file.'''
+    """Raised when there is no Google API credentials file."""
     def __init__(self, path):
         super().__init__(self)
         self.path = path
@@ -50,8 +50,8 @@ class NoCredentialsError(Exception):
         return msg.format(self.path)
 
 
-class SheetManager:
-    '''Object to manage Google Sheets access.'''
+class SheetManager(object):
+    """Object to manage Google Sheets access."""
     def __init__(self, key_file=None, worksheet=None, title=TITLE):
         if key_file:
             _key_file = os.path.abspath(key_file)
@@ -72,14 +72,14 @@ class SheetManager:
         self.worksheet = worksheet or DEFAULT_WORKSHEET
 
     def get_spreadsheet(self):
-        '''Open the group parameters spreadsheet as a `gspread.Spreadsheet`.'''
+        """Open the group parameters spreadsheet as a `gspread.Spreadsheet`."""
         if not self.spreadsheet:
             logger.debug('Opening Google Spreadsheet by title: %s', self.title)
             self.spreadsheet = self.google.open(self.title)
         return self.spreadsheet
 
     def get_params(self):
-        '''Generate dicts of parameters from spreadsheet rows.'''
+        """Generate dicts of parameters from spreadsheet rows."""
         doc = self.get_spreadsheet()
         logger.debug('Getting worksheet by title: %s', self.worksheet)
         wks = doc.worksheet(self.worksheet)
@@ -91,20 +91,20 @@ class SheetManager:
             yield params
 
     def get_cmgs(self, env):
-        '''
+        """
         Generate `CMGroup` objects from parameters in spreadsheet rows.
 
         The resulting `CMGroup`s will be based in project environment `env`.
-        '''
+        """
         logger.debug('Generating CMGs from worksheet: %s', self.worksheet)
 
         for params in self.get_params():
             yield CMGroup(params, env)
 
     def params_to_json(self, file=None):
-        '''
+        """
         Get group parameters from the worksheet and output to a JSON file.
-        '''
+        """
         if file is None:
             raise TypeError('No output file specified')
 
