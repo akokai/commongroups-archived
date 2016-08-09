@@ -1,20 +1,11 @@
 # -*- coding: utf-8 -*-
-'''Logging configuration'''
+'''Logging configuration for camelid.'''
 
 from __future__ import unicode_literals
 
-import os
 import sys
 import logging
 import logging.config
-
-from boltons.fileutils import mkdir_p
-
-_CUR_PATH = os.path.dirname(os.path.abspath(__file__))
-_PARENT_PATH = os.path.dirname(_CUR_PATH)
-LOG_PATH = os.path.join(_PARENT_PATH, 'log')
-mkdir_p(LOG_PATH)
-LOG_FILE_PATH = os.path.join(LOG_PATH, 'camelid.log')
 
 CONFIG = {
     'version': 1,
@@ -26,12 +17,6 @@ CONFIG = {
         }
     },
     'handlers': {
-        'file': {
-            'class': 'logging.FileHandler',
-            'formatter': 'default',
-            'filename': LOG_FILE_PATH,
-            'mode': 'w'
-        },
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'default',
@@ -41,27 +26,27 @@ CONFIG = {
     'loggers': {
         'camelid': {
             'level': 'DEBUG',
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'propagate': False
         },
         'camelid.googlesheet': {
             'level': 'DEBUG',
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'propagate': False
         },
         'camelid.cmgroup': {
             'level': 'DEBUG',
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'propagate': False
         },
         'camelid.pubchemutils': {
             'level': 'DEBUG',
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'propagate': False
         },
         'pubchempy': {
             'level': 'DEBUG',
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'propagate': False
         }
     },
@@ -72,3 +57,13 @@ CONFIG = {
 }
 
 logging.config.dictConfig(CONFIG)
+
+
+def add_project_handler(project_log_file):
+    loggers = list(CONFIG['loggers'].keys())
+    proj_handler = logging.FileHandler(project_log_file, mode='w')
+    fmt = logging.getLogger(loggers[0]).handlers[0].formatter
+    proj_handler.setFormatter(fmt)
+    for item in loggers:
+        lgr = logging.getLogger(item)
+        lgr.addHandler(proj_handler)

@@ -13,8 +13,8 @@ from boltons.iterutils import remap
 import requests
 import pubchempy as pcp
 
-from . import logconf
-from .casrnutils import validate, find_valid
+from camelid import logconf
+from camelid.casrnutils import validate, find_valid
 
 logger = logging.getLogger(__name__)
 
