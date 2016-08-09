@@ -67,7 +67,7 @@ class CamelidEnv:
             cmg_gen = cmg.cmgs_from_json(self)
         else:
             sheet = gs.SheetManager(self._key_file, self.worksheet)
-            cmg_gen = sheet.get_cmgs()
+            cmg_gen = sheet.get_cmgs(self)
 
         groups = list(islice(cmg_gen, None))
 
