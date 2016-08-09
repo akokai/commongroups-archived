@@ -24,16 +24,16 @@ def test_cmgroup():
         assert group.name == params['name']
 
 
-def test_clean_data():
+def test_clear_data():
     group = cmg.CMGroup(PARAMS_LIST[3], env)
     shutil.copy(os.path.join(_CUR_PATH, 'cids.json'), group._cids_file)
     shutil.copy(os.path.join(_CUR_PATH, 'cpds.jsonl'), group._compounds_file)
     assert len(group.get_compounds()) == 3
     assert len(group.get_returned_cids()) == 5
-    group.clean_data()
+    group.clear_data()
     assert group.get_compounds() == []
     assert group.get_returned_cids() == []
-    group.clean_data()
+    group.clear_data()
 
 
 def test_resume_update():
@@ -52,7 +52,7 @@ def test_resume_update():
 
     # Test what happens when _compounds_file is absent. In this case
     # It should end up containing all the CIDs in _cids_file.
-    group.clean_data()
+    group.clear_data()
     shutil.copy(os.path.join(_CUR_PATH, 'cids.json'), group._cids_file)
     group.update_from_cids()
     assert len(group.get_compounds()) == 5

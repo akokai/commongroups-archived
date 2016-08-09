@@ -177,7 +177,7 @@ class CMGroup:
         with open(self._cids_file, 'w') as json_file:
             json.dump(cids, json_file)
 
-    def clean_data(self):
+    def clear_data(self):
         '''Delete JSON files generated from previous operations.'''
         logger.debug('Removing data for %s', self)
         try:

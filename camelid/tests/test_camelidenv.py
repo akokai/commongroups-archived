@@ -9,5 +9,5 @@ from camelid.run import CamelidEnv
 def test_camelidenv():
     env = CamelidEnv(project='test')
     assert os.path.exists(env.log_file)
-    env.clean_logs()
+    env.clear_logs()
     assert not os.path.exists(env.log_file)

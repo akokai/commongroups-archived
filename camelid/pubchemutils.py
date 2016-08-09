@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''Functions to get specific information from PubChem.'''
+'''Functions to get specific information from PubChem'''
 
 from __future__ import unicode_literals
 
@@ -25,7 +25,7 @@ PUG_VIEW_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug_view'
 def get_creation_date(cid):
     '''Get the date of creation of the CID.'''
     url = PUG_BASE + '/compound/cid/{0}/dates/JSON'.format(cid)
-    logger.debug('Getting creation date of CID %s. Request URL: %s', cid, url)
+    logger.debug('Getting creation date of %s: request URL: %s', cid, url)
     req = requests.get(url)
 
     try:
@@ -33,7 +33,7 @@ def get_creation_date(cid):
         date_args = [int(data[k]) for k in ('Year', 'Month', 'Day')]
         created = date(*date_args)
     except (KeyError, TypeError, ValueError):
-        logger.warning('Could not retrieve creation date for CID %s.', cid)
+        logger.warning('Could not retrieve creation date for CID %s', cid)
         created = None
 
     return created
@@ -56,16 +56,16 @@ def get_known_casrns(cid):
             if validate(value['StringValue'], boolean=True):
                 casrns.add(value['StringValue'])
             else:
-                logger.debug('Found invalid CASRN [%s] for CID %s.',
+                logger.debug('Found invalid CASRN [%s] for CID %s',
                              value['StringValue'], cid)
         return False
 
     try:
         remap(data, visit=visit, reraise_visit=False)
     except LookupError:
-        logger.error('Failed to retrieve known CASRNs for CID %s.', cid)
+        logger.error('Failed to retrieve known CASRNs for CID %s', cid)
 
-    logger.debug('Found %i known CASRNs for CID %s.', len(casrns), cid)
+    logger.debug('Found %i known CASRNs for CID %s', len(casrns), cid)
     return casrns
 
 
@@ -86,11 +86,11 @@ def get_compound_info(cid):
         # This involves another API request for `cpd.synoynms`:
         cas_synonyms = find_valid(' '.join(cpd.synonyms))
         sleep(0.2)
-        logger.debug('Found %i CASRNs in synonyms for CID %s.',
+        logger.debug('Found %i CASRNs in synonyms for CID %s',
                      len(cas_synonyms), cid)
         casrns.update(cas_synonyms)
     except IndexError:
-        logger.debug('No CASRNs found in synonyms for CID %s.', cid)
+        logger.debug('No CASRNs found in synonyms for CID %s', cid)
 
     # Convert the IndexedSet into a string: if any 'known' CASRNs were
     # found, those will come first.
@@ -120,7 +120,7 @@ def gen_compounds(cids, last_updated=None):
             # This will skip CIDs created before the day of `last_updated`,
             # but will include those created on exactly the same day.
             if delta.days < 0:
-                logger.info('Skipping CID %s: predates last update.', cid)
+                logger.info('Skipping CID %s: predates last update', cid)
                 continue
 
         creation_date = created.isoformat() if created else ''
@@ -152,7 +152,7 @@ def init_substruct_search(struct, method='smiles'):
 
     if search_req.status_code != 202:
         logger.error('Unexpected request status: %s', search_req.status_code)
-        logger.error('Stopping attempted substructure search.')
+        logger.error('Stopping attempted substructure search')
         return None     # There may be something more useful to do here.
 
     listkey = str(search_req.json()['Waiting']['ListKey'])
@@ -175,25 +175,23 @@ def retrieve_search_results(listkey, **kwargs):
                  key_req.status_code)
 
     while key_req.status_code == 202:
-        logger.debug('Server not ready. Waiting additional 10 s.')
+        logger.debug('Server not ready. Waiting additional 10 s')
         sleep(10)
         key_req = requests.get(key_url)
 
     try:
         cids = key_req.json()['IdentifierList']['CID']
-        logger.info('PubChem search returned %i results.', len(cids))
+        logger.info('PubChem search returned %i results', len(cids))
         return cids
     except IndexError:
-        logger.error('No CIDs found in substructure search results.')
+        logger.error('No CIDs found in substructure search results')
         return None
 
 
 def substruct_search(struct, method='smiles', wait=10, **kwargs):
-    '''
-    Find compounds in PubChem matching a substructure.
-    '''
+    '''Find compounds in PubChem matching a substructure.'''
     listkey = init_substruct_search(struct, method)
-    logger.debug('Waiting %i s before retrieving search results.', wait)
+    logger.debug('Waiting %i s before retrieving search results', wait)
     sleep(wait)
     cids = retrieve_search_results(listkey, **kwargs)
     return cids

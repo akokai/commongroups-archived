@@ -65,7 +65,7 @@ class SheetManager:
         except FileNotFoundError:
             raise NoCredentialsError(_key_file)
 
-        logger.debug('Authorizing Google Service Account credentials.')
+        logger.debug('Authorizing Google Service Account credentials')
         self.google = gspread.authorize(creds)
         self.title = title
         self.spreadsheet = None

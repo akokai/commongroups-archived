@@ -46,7 +46,7 @@ class CamelidEnv:
         log_file = datetime.now().strftime('%Y%m%dT%H%M%S') + '.log'
         self.log_file = pjoin(self.log_path, log_file)
         logconf.add_project_handler(self.log_file)
-        logger.debug('Project path: %s', self.project_path)
+        logger.info('Project path: %s', self.project_path)
 
         # Set up data and results directories.
         self.data_path = pjoin(self.project_path, 'data')
@@ -63,29 +63,32 @@ class CamelidEnv:
         # Set worksheet to look for parameters in Google Sheet.
         self.worksheet = worksheet
 
-    def clean_logs(self):
+    def clear_logs(self):
         for item in iglob(pjoin(self.log_path, '*.log')):
             os.remove(item)
 
     def run(self, args):
         if args.json_file:
+            logger.info('Generating compound groups from JSON file')
             cmg_gen = cmg.cmgs_from_json(self)
         else:
+            logger.info('Generating compound groups from Google Sheet')
             sheet = gs.SheetManager(self._key_file, self.worksheet)
             cmg_gen = sheet.get_cmgs(self)
 
         groups = list(islice(cmg_gen, None))
 
         if args.clean_start:
+            logger.debug('Clearing data and logs')
             for group in groups:
-                group.clean_data()
-            self.clean_logs()
+                group.clear_data()
+            self.clear_logs()
 
-        logger.debug('Starting batch CMG update process.')
+        logger.info('Starting batch CMG update process')
         try:
             cmg.batch_cmg_search(groups, args.resume_update)
         except:
-            logger.exception('Process failed.')
+            logger.exception('Process failed')
 
 
 def create_parser():
