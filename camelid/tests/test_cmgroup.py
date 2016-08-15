@@ -20,7 +20,7 @@ shutil.copy(PARAMS_JSON, env.params_json)
 
 def test_cmgroup():
     for params in PARAMS_LIST:
-        group = cmg.CMGroup(params, env)
+        group = cmg.CMGroup(env, params)
         assert group.materialid == params['materialid']
         assert group.name == params['name']
 

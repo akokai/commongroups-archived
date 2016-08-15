@@ -16,15 +16,16 @@ def validate(casrn, boolean=False):
     based on the CAS documentation:
     https://www.cas.org/content/chemical-substances/checkdig
 
-    Args:
-        casrn (str or unicode or int): The CASRN to validate.
+    Parameters:
+        casrn (str or int): The CASRN to validate.
             Non-numeric characters are ignored.
         boolean (bool): Whether to return bool rather than string.
 
     Returns:
-        The CASRN as string (unicode in Python 2), with uniform CAS-style
-        hypenation and no leading/trailing spaces; or ``None`` if the
-        CASRN is invalid. If ``boolean=True``, returns ``True`` or ``False``
+        The CASRN as :class:`str`, with uniform CAS-style hypenation and no
+        leading/trailing spaces; or ``None`` if the CASRN is invalid.
+
+        If ``boolean=True``, returns ``True`` or ``False``
         depending on validity.
 
     Examples:
@@ -54,7 +55,7 @@ def find_valid(string):
     """
     Find all valid CASRNs in a string.
 
-    Args:
+    Parameters:
         string (str or unicode): The string to search.
 
     Returns:

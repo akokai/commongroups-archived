@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Chemical and material group class definition"""
+"""Chemical and material group class definition."""
 
 from __future__ import unicode_literals
 
@@ -36,16 +36,21 @@ EXPORT_COLS = ['CASRN',         # Generated from CASRN_list upon export
 
 
 class CMGroup(object):
-    """Chemical and material group class."""
-    def __init__(self, params, env):
-        """
-        Initialize from a dict containing all parameters of a compound group.
+    """
+    Chemical and material group class.
 
-        The dict should contain `materialid`, `name`,` `searchtype`,
-        `structtype`, `searchstring`, and `last_updated`. (For now...)
-        The `env` argument is a `CamelidEnv` object representing the current
-        project.
-        """
+    Data are stored as filed in the project environment associated with the
+    :class:`CMGroup`.
+
+    Parameters:
+        env (:class:`camelid.run.CamelidEnv`): The project environment to use.
+        params (dict): A dictionary containing the parameters of the compound
+            group. It should contain: ``materialid``, ``name``,
+            ``searchtype``, ``structtype``, ``searchstring``, and
+            ``last_updated``. (For now...)
+    """
+    def __init__(self, env, params):
+        # TODO: Specify all params as individual kwargs.
         try:
             self._materialid = params['materialid']
         except KeyError:
@@ -80,6 +85,20 @@ class CMGroup(object):
 
         self._params['current_update'] = None
 
+    @classmethod
+    def from_dict(cls, env, params):
+        """
+        Initialize a :class:`CMGroup` from a :class:`dict` of parameters.
+
+        Parameters:
+            env (:class:`camelid.run.CamelidEnv`): The project environment.
+            params (dict): A dictionary containing the parameters of the CMG.
+
+        Returns:
+            :class:`CMGroup`: The chemical/material group.
+        """
+        return cls(env, **params)
+
     @property
     def materialid(self):
         """The numeric ID of the chemical/material group."""
@@ -96,7 +115,7 @@ class CMGroup(object):
         """
         The type of structure-based search used to define this group.
 
-        Currently only `substructure` is of any use.
+        Currently only `substructure` is supported.
         """
         if 'searchtype' in self._params:
             return self._params['searchtype']
@@ -361,8 +380,16 @@ def params_from_json(params_file):
 
 def cmgs_from_json(env):
     """
-    Generate `CMGroup` objects from a JSON file, with a given `CamelidEnv`.
+    Generate :class:`camelid.cmgroup.CMGroup` objects from a JSON file.
+
+    Parameters:
+        env (:class:`camelid.run.CamelidEnv`): The project environment. This
+            determines the path to the JSON file and the environment used for
+            the :class:`CMGroup` objects that are created.
+
+    Yields:
+        :class:`CMGroup`: Chemical/material group objects.
     """
     logger.debug('Reading group parameters from %s', env.params_json)
     for params in params_from_json(env.params_json):
-        yield CMGroup(params, env)
+        yield CMGroup(env, params)

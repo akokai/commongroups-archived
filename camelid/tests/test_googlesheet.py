@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Unit tests for Google Spreadsheet access.
-
-For these tests to work, follow the setup instructions in `googlesheet.py`.
-"""
+"""Unit tests for Google Spreadsheet access."""
 
 from os.path import join as pjoin
 from itertools import islice
@@ -17,7 +13,7 @@ env = CamelidEnv(project='test')
 
 def test_get_spreadsheet():
     doc = sheet.get_spreadsheet()
-    assert doc.sheet1.title == 'new CMGs'
+    assert doc.sheet1.title == 'all CMGs'
 
 
 def test_get_params():
