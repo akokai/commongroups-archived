@@ -13,6 +13,7 @@ _CUR_PATH = os.path.abspath(os.path.dirname(__file__))
 PARAMS_JSON = os.path.join(_CUR_PATH, 'params.json')
 PARAMS_LIST = cmg.params_from_json(PARAMS_JSON)
 
+# This creates test environment directories on filesystem as a side effect.
 env = CamelidEnv(project='test')
 shutil.copy(PARAMS_JSON, env.params_json)
 

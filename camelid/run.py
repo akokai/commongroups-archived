@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Automatically update chemical & material groups."""
+"""
+The script can be run from the repository root directory using::
+
+   python -m camelid.run [options]
+
+Use the option ``--help`` to get a list of all the options.
+"""
 
 from __future__ import unicode_literals
 
@@ -93,7 +99,7 @@ class CamelidEnv(object):
 
 def create_parser():
     """Parse arguments for the run script."""
-    desc = 'Search for compounds belonging to specified chemical classes.'
+    desc = 'Automatically populate and update chemical & material groups.'
     parser = argparse.ArgumentParser(description=desc)
 
     parser.add_argument('-e', '--env_path', action='store', type=str,

@@ -1,19 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Google Spreadsheet access.
+Get CMG parameters from a Google Sheet.
 
-Setup:
-- See the `gspread` docs for instructions on getting OAuth2 credentials for
-  Google Drive API access: http://gspread.readthedocs.io/en/latest/index.html
-- Download a JSON file containing your Google service account credentials.
-  You must specify the path to this file when creating a `SheetManager` or
-  have it specified in the environment variable `CAMELID_KEYFILE`.
-
-Notes:
-- Opening by key or by URL in `gspread` is broken by the "New Sheets",
-but opening by title seems to work.
-- Don't forget to share the relevant Google Spreadsheet with your Google
-service account client e-mail.
+See :ref:`Google Sheets access <google-setup>` for general information on
+using this functionality.
 """
 
 from __future__ import unicode_literals
