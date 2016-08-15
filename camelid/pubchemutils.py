@@ -1,5 +1,14 @@
 # -*- coding: utf-8 -*-
-'''Functions to get specific information from PubChem'''
+"""
+Functions to get compound information from PubChem using web services.
+
+This module makes use of :mod:`PubChemPy`. See the `PubChemPy docs`_
+for a full description of how that works. Also see the
+`PubChem REST API`_ specification for documentation of the web services.
+
+.. _PubChemPy docs: http://pubchempy.readthedocs.io/
+.. _PubChem REST API: https://pubchem.ncbi.nlm.nih.gov/pug_rest/PUG_REST.html
+"""
 
 from __future__ import unicode_literals
 
@@ -13,8 +22,8 @@ from boltons.iterutils import remap
 import requests
 import pubchempy as pcp
 
-from camelid import logconf
-from camelid.casrnutils import validate, find_valid
+from . import logconf
+from .casrnutils import validate, find_valid
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +32,17 @@ PUG_VIEW_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug_view'
 
 
 def get_creation_date(cid):
-    '''Get the date of creation of the CID.'''
+    """
+    Get the date of creation of a PubChem Compound.
+
+    Parameters:
+        cid (str or int): PubChem Compound ID.
+
+    Returns:
+        :class:`datetime.date`: Creation date.
+
+        ``None`` if not found.
+    """
     url = PUG_BASE + '/compound/cid/{0}/dates/JSON'.format(cid)
     logger.debug('Getting creation date of %s: request URL: %s', cid, url)
     req = requests.get(url)
@@ -40,11 +59,22 @@ def get_creation_date(cid):
 
 
 def get_known_casrns(cid):
-    '''
-    Get PubChem-designated CASRNs for a given CID and return an IndexedSet.
+    """
+    Get PubChem's specifically designated CASRNs for a given CID.
 
+    The PubChem API can return a special section of data dedicated to CASRNs.
+    This is not (yet) documented in the offical API specification.
     This method may need to change as PubChem improves access to CASRNs.
-    '''
+
+    We compile CASRNs in a container object that preserves their order when
+    more are added, as in :func:`get_compound_info`.
+
+    Parameters:
+        cid (str or int): PubChem Compound ID.
+
+    Returns:
+        :class:`boltons.setutils.IndexedSet`: "Known" CASRNs.
+    """
     url = PUG_VIEW_BASE + '/data/compound/{0}/JSON?heading=CAS'.format(cid)
     logger.debug('Getting known CASRNs for CID %s. Request URL: %s', cid, url)
     req = requests.get(url)
@@ -70,12 +100,19 @@ def get_known_casrns(cid):
 
 
 def get_compound_info(cid):
-    '''
-    Get CASRNs and IUPAC name for a CID and return a dict.
+    """
+    Get CASRNs and IUPAC name for a CID and return a :class:`dict`.
 
     CASRNs are returned as a space-separated string with the 'best' one first.
-    Try to keep API request rate below 5 per second.
-    '''
+    Tries to keep API request rate below 5 per second.
+
+    Parameters:
+        cid (str or int): PubChem Compound ID.
+
+    Returns:
+        dict: Containing ``CID``, ``CASRN_list`` [space-separated string],
+        and ``IUPAC_name``.
+    """
     casrns = get_known_casrns(cid)  # Instantiates an IndexedSet.
     sleep(0.2)
 
@@ -104,13 +141,24 @@ def get_compound_info(cid):
 
 
 def gen_compounds(cids, last_updated=None):
-    '''
+    """
     Generate dicts of information retrieved from PubChem for a list of CIDs.
 
-    Can compare CID creation date to CMG `last_updated` (`datetime.date`).
-    Ideally `cids` should be a list of CIDs.
-    Since this is a generator, it can be made to start and stop anywhere.
-    '''
+    Compound information is retrieved using :func:`get_compound_info`.
+    Since this is a `generator`_, it can be made to start and stop anywhere
+    while iterating through the input list of CIDs.
+
+    Parameters:
+        cids (list): PubChem Compound IDs.
+        last_updated (:class:`datetime.date`): If specified, only return
+            information for those PubChem Compounds with a creation date
+            *newer* than ``last_updated``.
+
+    Yields:
+        dict: Compound information including ``creation_date``.
+
+    .. _generator: https://docs.python.org/3/tutorial/classes.html#generators
+    """
     for cid in cids:
         created = get_creation_date(cid)
         sleep(0.2)
@@ -132,18 +180,31 @@ def gen_compounds(cids, last_updated=None):
 
 
 def filter_listkey_args(**kwargs):
-    '''Return only keyword arguments relating to ListKey pagination.'''
+    """
+    Filter pagination-related keyword arguments.
+
+    Parameters:
+        **kwargs: Arbitrary keyword arguments.
+
+    Returns:
+        dict: Keyword arguments relating to ``ListKey`` pagination.
+    """
     listkey_options = ['listkey_count', 'listkey_start']
     listkey_args = {k: kwargs[k] for k in kwargs if k in listkey_options}
     return listkey_args
 
 
 def init_substruct_search(struct, method='smiles'):
-    '''
+    """
     Initiate an asynchronous substructure search using the PubChem API.
 
-    Returns the ListKey given by the server response.
-    '''
+    Parameters:
+        struct (str): The molecular structure search query.
+        method (str): Structure input method. We mostly use `smiles`.
+
+    Returns:
+        str: The asynchronous ``ListKey`` given in the server response.
+    """
     search_path = '/compound/substructure/{0}/{1}/JSON'.format(method,
                                                                quote(struct))
     search_url = PUG_BASE + search_path
@@ -162,9 +223,20 @@ def init_substruct_search(struct, method='smiles'):
 
 
 def retrieve_search_results(listkey, **kwargs):
-    '''
-    Retrieve search results from the PubChem API using the given ListKey.
-    '''
+    """
+    Retrieve search results from the PubChem API using the given ``ListKey``.
+
+    Parameters:
+        listkey (str): The ``ListKey`` for retrieving the search results.
+        **kwargs: Arbitrary keyword arguments. For example, arguments relating
+            to pagination of search results: ``listkey_count`` and
+            ``listkey_start``. See the `PubChem API`_ documentation.
+
+    .. _PubChem API: https://pubchem.ncbi.nlm.nih.gov/pug_rest/PUG_REST.html
+
+    Returns:
+        list: CIDs returned by the search.
+    """
     key_url = PUG_BASE + '/compound/listkey/{0}/cids/JSON'.format(listkey)
     listkey_args = filter_listkey_args(**kwargs) if kwargs else None
     if listkey_args:
@@ -185,11 +257,23 @@ def retrieve_search_results(listkey, **kwargs):
         return cids
     except IndexError:
         logger.error('No CIDs found in substructure search results')
-        return None
+        return []
 
 
 def substruct_search(struct, method='smiles', wait=10, **kwargs):
-    '''Find compounds in PubChem matching a substructure.'''
+    """
+    Find compounds in PubChem matching a substructure.
+
+    Parameters:
+        struct (str): The molecular structure search query.
+        method (str): Structure input method. We mostly use `smiles`.
+        wait (int): Delay (seconds) before retrieving async search results.
+        **kwargs: Arbitrary keyword arguments, such as for pagination
+            (see :func:`retrieve_search_results`).
+
+    Returns:
+        list: CIDs returned by the search.
+    """
     listkey = init_substruct_search(struct, method)
     logger.debug('Waiting %i s before retrieving search results', wait)
     sleep(wait)

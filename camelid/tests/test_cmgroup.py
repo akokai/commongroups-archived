@@ -1,25 +1,26 @@
 # -*- coding: utf-8 -*-
-'''Unit tests for CMGroup class.'''
+"""Unit tests for CMGroup class."""
 
 import os
 import shutil
 from itertools import islice
 
-from camelid.run import CamelidEnv
-from camelid import cmgroup as cmg
+from ..run import CamelidEnv
+from .. import cmgroup as cmg
 
 # Locate the test params to use.
 _CUR_PATH = os.path.abspath(os.path.dirname(__file__))
 PARAMS_JSON = os.path.join(_CUR_PATH, 'params.json')
 PARAMS_LIST = cmg.params_from_json(PARAMS_JSON)
 
+# This creates test environment directories on filesystem as a side effect.
 env = CamelidEnv(project='test')
 shutil.copy(PARAMS_JSON, env.params_json)
 
 
 def test_cmgroup():
     for params in PARAMS_LIST:
-        group = cmg.CMGroup(params, env)
+        group = cmg.CMGroup(env, params)
         assert group.materialid == params['materialid']
         assert group.name == params['name']
 

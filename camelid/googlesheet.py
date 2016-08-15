@@ -1,20 +1,10 @@
 # -*- coding: utf-8 -*-
-'''
-Google Spreadsheet access.
+"""
+Get CMG parameters from a Google Sheet.
 
-Setup:
-- See the `gspread` docs for instructions on getting OAuth2 credentials for
-  Google Drive API access: http://gspread.readthedocs.io/en/latest/index.html
-- Download a JSON file containing your Google service account credentials.
-  You must specify the path to this file when creating a `SheetManager` or
-  have it specified in the environment variable `CAMELID_KEYFILE`.
-
-Notes:
-- Opening by key or by URL in `gspread` is broken by the "New Sheets",
-but opening by title seems to work.
-- Don't forget to share the relevant Google Spreadsheet with your Google
-service account client e-mail.
-'''
+See :ref:`Google Sheets access <googlesetup>` for general information on
+using this functionality.
+"""
 
 from __future__ import unicode_literals
 
@@ -26,8 +16,8 @@ from itertools import islice
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials as SAC
 
-from camelid import logconf
-from camelid.cmgroup import CMGroup
+from . import logconf
+from .cmgroup import CMGroup
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +30,7 @@ PARAMS_COLS = ['materialid', 'name', 'searchtype',
 
 
 class NoCredentialsError(Exception):
-    '''Raised when there is no Google API credentials file.'''
+    """Raised when there is no Google API credentials file."""
     def __init__(self, path):
         super().__init__(self)
         self.path = path
@@ -50,8 +40,28 @@ class NoCredentialsError(Exception):
         return msg.format(self.path)
 
 
-class SheetManager:
-    '''Object to manage Google Sheets access.'''
+class SheetManager(object):
+    """
+    Object to manage Google Sheets access.
+
+    Parameters:
+        key_file (str): Path to Google service account credentials
+            JSON file. If unspecified, attempts to read the
+            environment variable ``CAMELID_KEYFILE`` for the path.
+        worksheet (str): Title of the *worksheet* to look for CMG parameters
+            within the Google Sheet. If unspecified, uses a default value.
+        title (str): *Title* of the Google Sheet to open. If unspecified, uses
+            a default value.
+
+    Raises:
+        :class:`camelid.googlesheet.NoCredentialsError`: If the API
+            credentials are missing or cannot be parsed from JSON.
+
+    Notes:
+        Yes, we open Google Sheets *by title.*  It would be nice to open them
+        by key or by URL, but that functionality in :mod:`gspread` is broken
+        because of the "New Sheets".
+    """
     def __init__(self, key_file=None, worksheet=None, title=TITLE):
         if key_file:
             _key_file = os.path.abspath(key_file)
@@ -66,23 +76,33 @@ class SheetManager:
             raise NoCredentialsError(_key_file)
 
         logger.debug('Authorizing Google Service Account credentials')
-        self.google = gspread.authorize(creds)
-        self.title = title
-        self.spreadsheet = None
-        self.worksheet = worksheet or DEFAULT_WORKSHEET
+        self._google = gspread.authorize(creds)
+        self._title = title
+        self._spreadsheet = None
+        self._worksheet = worksheet or DEFAULT_WORKSHEET
 
     def get_spreadsheet(self):
-        '''Open the group parameters spreadsheet as a `gspread.Spreadsheet`.'''
-        if not self.spreadsheet:
-            logger.debug('Opening Google Spreadsheet by title: %s', self.title)
-            self.spreadsheet = self.google.open(self.title)
-        return self.spreadsheet
+        """
+        Open the spreadsheet containing CMG parameters.
+
+        Returns:
+            :mod:`gspread.Spreadsheet`: The Google Sheet object.
+        """
+        if not self._spreadsheet:
+            logger.debug('Opening Google Sheet by title: %s', self._title)
+            self._spreadsheet = self._google.open(self._title)
+        return self._spreadsheet
 
     def get_params(self):
-        '''Generate dicts of parameters from spreadsheet rows.'''
+        """
+        Generate dicts of parameters from spreadsheet rows.
+
+        Yields:
+            dict: Parameters of each CMG; one per spreadsheet row.
+        """
         doc = self.get_spreadsheet()
-        logger.debug('Getting worksheet by title: %s', self.worksheet)
-        wks = doc.worksheet(self.worksheet)
+        logger.debug('Getting worksheet by title: %s', self._worksheet)
+        wks = doc.worksheet(self._worksheet)
 
         for i in range(2, wks.row_count + 1):
             if wks.cell(i, 1).value in [None, '']:
@@ -91,20 +111,32 @@ class SheetManager:
             yield params
 
     def get_cmgs(self, env):
-        '''
-        Generate `CMGroup` objects from parameters in spreadsheet rows.
+        """
+        Generate :class:`CMGroup` objects from parameters in spreadsheet rows.
 
-        The resulting `CMGroup`s will be based in project environment `env`.
-        '''
-        logger.debug('Generating CMGs from worksheet: %s', self.worksheet)
+        Parameters:
+            env (:class:`camelid.run.CamelidEnv`): The project environment
+                that the returned objects will use to store data, etc.
+
+        Yields:
+            :class:`camelid.cmgroup.CMGroup`: Based on parameters in each row.
+
+        """
+        logger.debug('Generating CMGs from worksheet: %s', self._worksheet)
 
         for params in self.get_params():
-            yield CMGroup(params, env)
+            yield CMGroup(env, params)
 
     def params_to_json(self, file=None):
-        '''
+        """
         Get group parameters from the worksheet and output to a JSON file.
-        '''
+
+        Parameters:
+            file (str): Path to output file.
+
+        Raises:
+            TypeError: If the output file path is not specified.
+        """
         if file is None:
             raise TypeError('No output file specified')
 

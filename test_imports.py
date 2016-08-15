@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''Test for import errors.'''
+"""Test for import errors."""
 
 
 def test_imports():

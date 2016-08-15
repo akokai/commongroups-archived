@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''Automatically update chemical & material groups.'''
+"""Automatically populate and update chemical & material groups."""
 
 from __future__ import unicode_literals
 
@@ -13,15 +13,30 @@ from itertools import islice
 
 from boltons.fileutils import mkdir_p
 
-from camelid import logconf
-from camelid import cmgroup as cmg
-from camelid import googlesheet as gs
+from . import logconf
+from . import cmgroup as cmg
+from . import googlesheet as gs
 
 logger = logging.getLogger('camelid')
 
 
-class CamelidEnv:
-    '''Run environment for camelid. Prefers desert or alpine habitat.'''
+class CamelidEnv(object):
+    """
+    Run environment for :mod:`camelid`. Prefers desert or alpine habitats.
+
+    Parameters:
+        env_path (str): Path to root camelid home. If not specified,
+            looks for environment variable ``CAMELID_HOME`` or defaults to
+            ``~/camelid_data``.
+        project (str): Project name. If unspecified, defaults to
+            ``'default'``.
+        worksheet (str): Title of the *worksheet* to look for CMG parameters
+            within the Google Sheet. Optional; if unspecified, filled in by
+            :class:`camelid.googlesheet.SheetManager`.
+        key_file (str): Path to Google service account credentials
+            JSON file. If unspecified here, attempts to locate it are made by
+            :class:`camelid.googlesheet.SheetManager`.
+    """
     def __init__(self,
                  env_path=None,
                  project=None,
@@ -29,33 +44,33 @@ class CamelidEnv:
                  key_file=None):
         # Establish path to camelid home.
         if env_path:
-            self.env_path = os.path.abspath(env_path)
+            self._env_path = os.path.abspath(env_path)
         elif os.getenv('CAMELID_HOME'):
-            self.env_path = os.path.abspath(os.getenv('CAMELID_HOME'))
+            self._env_path = os.path.abspath(os.getenv('CAMELID_HOME'))
         else:
-            self.env_path = pjoin(os.path.expanduser('~'), 'camelid_data')
+            self._env_path = pjoin(os.path.expanduser('~'), 'camelid_data')
 
         # Establish project location.
         project = project or 'default'
-        self.project_path = pjoin(self.env_path, project)
-        mkdir_p(self.project_path)
+        self._project_path = pjoin(self._env_path, project)
+        mkdir_p(self._project_path)
 
         # Set up per-project logging to file.
-        self.log_path = pjoin(self.project_path, 'log')
-        mkdir_p(self.log_path)
+        self._log_path = pjoin(self._project_path, 'log')
+        mkdir_p(self._log_path)
         log_file = datetime.now().strftime('%Y%m%dT%H%M%S') + '.log'
-        self.log_file = pjoin(self.log_path, log_file)
-        logconf.add_project_handler(self.log_file)
-        logger.info('Project path: %s', self.project_path)
+        self._log_file = pjoin(self._log_path, log_file)
+        self.add_project_handler()
+        logger.info('Project path: %s', self._project_path)
 
         # Set up data and results directories.
-        self.data_path = pjoin(self.project_path, 'data')
-        mkdir_p(self.data_path)
-        self.results_path = pjoin(self.project_path, 'results')
-        mkdir_p(self.results_path)
+        self._data_path = pjoin(self._project_path, 'data')
+        mkdir_p(self._data_path)
+        self._results_path = pjoin(self._project_path, 'results')
+        mkdir_p(self._results_path)
 
         # Set file path to look for parameters in JSON format.
-        self.params_json = pjoin(self.project_path, 'params.json')
+        self._params_json = pjoin(self._project_path, 'params.json')
 
         # Store path to Google API credentials file.
         self._key_file = key_file
@@ -63,11 +78,74 @@ class CamelidEnv:
         # Set worksheet to look for parameters in Google Sheet.
         self.worksheet = worksheet
 
+    @property
+    def project_path(self):
+        """Path to project directory."""
+        return self._project_path
+
+    @property
+    def log_path(self):
+        """Path to project log directory."""
+        return self._log_path
+
+    @property
+    def log_file(self):
+        """Path to the currently active log file."""
+        return self._log_file
+
+    @property
+    def data_path(self):
+        """
+        Path to the project data directory.
+        """
+        return self._data_path
+
+    @property
+    def results_path(self):
+        """Path to project results directory."""
+        return self._results_path
+
+    @property
+    def params_json(self):
+        """
+        Path to JSON file containing project CMG parameters.
+
+        This path is always ``<project path>/params.json``.
+        If starting or resuming a CMG update from JSON (instead of from the
+        Google Sheet), this is the file that should contains CMG parameters.
+        """
+        return self._params_json
+
+    def add_project_handler(self):
+        """
+        Add a project-specific :class:`FileHandler` for all logging output.
+
+        This enables logging to a file that's kept within the project
+        directory.
+        """
+        loggers = list(logconf.CONFIG['loggers'].keys())
+        proj_handler = logging.FileHandler(self._log_file, mode='w')
+        fmt = logging.getLogger(loggers[0]).handlers[0].formatter
+        proj_handler.setFormatter(fmt)
+
+        for item in loggers:
+            lgr = logging.getLogger(item)
+            lgr.addHandler(proj_handler)
+
     def clear_logs(self):
+        """Delete all log files belonging to the project."""
         for item in iglob(pjoin(self.log_path, '*.log')):
             os.remove(item)
 
     def run(self, args):
+        """
+        Perform operations specified by the arguments.
+
+        See :ref:`Running camelid <running>` for possible operations.
+
+        Parameters:
+            args (dict): Parsed command-line arguments.
+        """
         if args.json_file:
             logger.info('Generating compound groups from JSON file')
             cmg_gen = cmg.cmgs_from_json(self)
@@ -92,21 +170,10 @@ class CamelidEnv:
 
 
 def create_parser():
-    '''Parse arguments for the run script.'''
-    desc = 'Search for compounds belonging to specified chemical classes.'
+    """Create command-line argument parser."""
+    desc = 'Automatically populate and update chemical & material groups.'
     parser = argparse.ArgumentParser(description=desc)
 
-    parser.add_argument('-e', '--env_path', action='store', type=str,
-                        help='path to camelid home')
-    parser.add_argument('-p', '--project', action='store', type=str,
-                        help='project name')
-    parser.add_argument('-w', '--worksheet', action='store', type=str,
-                        help='worksheet to get parameters from')
-    parser.add_argument('-k', '--key_file', action='store', type=str,
-                        help='path to Google API key file')
-    parser.add_argument('-j', '--json_file', action='store_true',
-                        help='read parameters from JSON file',
-                        default=False)
     parser.add_argument('-r', '--resume_update', action='store_true',
                         help='resume previous update',
                         default=False)
@@ -114,6 +181,17 @@ def create_parser():
                         help='do not resume previous searches, and '
                              'delete existing data before starting',
                         default=False)
+    parser.add_argument('-w', '--worksheet', action='store', type=str,
+                        help='worksheet to get parameters from')
+    parser.add_argument('-j', '--json_file', action='store_true',
+                        help='read parameters from JSON file',
+                        default=False)
+    parser.add_argument('-p', '--project', action='store', type=str,
+                        help='project name')
+    parser.add_argument('-e', '--env_path', action='store', type=str,
+                        help='path to camelid home')
+    parser.add_argument('-k', '--key_file', action='store', type=str,
+                        help='path to Google API key file')
     return parser
 
 
