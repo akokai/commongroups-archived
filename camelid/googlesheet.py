@@ -125,7 +125,7 @@ class SheetManager(object):
         logger.debug('Generating CMGs from worksheet: %s', self._worksheet)
 
         for params in self.get_params():
-            yield CMGroup(env, params)
+            yield CMGroup(params, env)
 
     def params_to_json(self, file=None):
         """

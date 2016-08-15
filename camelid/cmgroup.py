@@ -43,14 +43,13 @@ class CMGroup(object):
     :class:`CMGroup`.
 
     Parameters:
-        env (:class:`camelid.run.CamelidEnv`): The project environment to use.
         params (dict): A dictionary containing the parameters of the compound
             group. It should contain: ``materialid``, ``name``,
             ``searchtype``, ``structtype``, ``searchstring``, and
             ``last_updated``. (For now...)
+        env (:class:`camelid.run.CamelidEnv`): The project environment to use.
     """
-    def __init__(self, env, params):
-        # TODO: Specify all params as individual kwargs.
+    def __init__(self, params, env):
         try:
             self._materialid = params['materialid']
         except KeyError:
@@ -84,20 +83,6 @@ class CMGroup(object):
             self._last_updated = None
 
         self._params['current_update'] = None
-
-    @classmethod
-    def from_dict(cls, env, params):
-        """
-        Initialize a :class:`CMGroup` from a :class:`dict` of parameters.
-
-        Parameters:
-            env (:class:`camelid.run.CamelidEnv`): The project environment.
-            params (dict): A dictionary containing the parameters of the CMG.
-
-        Returns:
-            :class:`CMGroup`: The chemical/material group.
-        """
-        return cls(env, **params)
 
     @property
     def materialid(self):
@@ -413,4 +398,4 @@ def cmgs_from_json(env):
     """
     logger.debug('Reading group parameters from %s', env.params_json)
     for params in params_from_json(env.params_json):
-        yield CMGroup(env, params)
+        yield CMGroup(params, env)
