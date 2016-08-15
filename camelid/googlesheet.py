@@ -56,6 +56,11 @@ class SheetManager(object):
     Raises:
         :class:`camelid.googlesheet.NoCredentialsError`: If the API
             credentials are missing or cannot be parsed from JSON.
+
+    Notes:
+        Yes, we open Google Sheets *by title.*  It would be nice to open them
+        by key or by URL, but that functionality in :mod:`gspread` is broken
+        because of the "New Sheets".
     """
     def __init__(self, key_file=None, worksheet=None, title=TITLE):
         if key_file:

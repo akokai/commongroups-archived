@@ -330,7 +330,11 @@ class CMGroup(object):
 
     def pubchem_update(self, wait=10, **kwargs):
         """
-        Perform a PubChem search to update a compound group.
+        Perform a PubChem search to update the CMG, and output to Excel.
+
+        Parameters:
+            wait (int): Delay (seconds) before retrieving async search results.
+            **kwargs: Arbitrary keyword arguments.
         """
         self.init_pubchem_search()
         logger.info('Waiting %i s before retrieving search results', wait)
@@ -340,8 +344,8 @@ class CMGroup(object):
         self.to_excel()
 
     def screen(self, compound):
-        """Screen a new compound for membership in the group."""
         # TODO: Placeholder!
+        # """Screen a new compound for membership in the group."""
         if compound in self.get_compounds():
             return True
         else:
@@ -350,7 +354,16 @@ class CMGroup(object):
 
 def batch_cmg_search(groups, resume_update=False, wait=120, **kwargs):
     """
-    Perform PubChem searches for many CMGs and output to Excel files.
+    Perform PubChem searches for many CMGs and output all to Excel files.
+
+    Parameters:
+        groups (iterable): The CMGs to be updated.
+        resume_update (bool): If `True`, does not perform a search, but looks
+            for previous search results saved in the project environment
+            and continues the update process for those search results.
+        wait (int): Delay (seconds) before retrieving async search results.
+        **kwargs: Arbitrary keyword arguments, such as for pagination of
+            search results.
     """
     if not resume_update:
         for group in groups:
@@ -372,7 +385,15 @@ def batch_cmg_search(groups, resume_update=False, wait=120, **kwargs):
 
 
 def params_from_json(params_file):
-    """Load a list of group parameters from a JSON file."""
+    """
+    Load a list of group parameters from a JSON file.
+
+    Parameters:
+        params_file (str): Path to a JSON file containing CMG parameters.
+
+    Returns:
+        A container, usually a list of dicts.
+    """
     with open(params_file, 'r') as json_file:
         params_list = json.load(json_file)
     return params_list

@@ -1,0 +1,2 @@
+#!/bin/bash
+sphinx-apidoc -o apidocs/ ../camelid/ ../camelid/tests/ ../camelid/logconf.py
