@@ -90,17 +90,17 @@ Use the option ``--help`` to get a list of all the options. Here is a partial li
 ``-c``, ``--clean_start``
    Do not resume previous searches, and delete existing data before starting.
 
-``-w WORKSHEET``, ``--worksheet WORKSHEET``
-   Worksheet to get parameters from.
-
-``-j``, ``--json_file``
-   Read parameters from JSON file.
-
 ``-p PROJECT``, ``--project PROJECT``
    Project name.
 
 ``-e ENV_PATH``, ``--env_path ENV_PATH``
    Path to camelid home.
 
+``-w WORKSHEET``, ``--worksheet WORKSHEET``
+   Worksheet to get parameters from.
+
 ``-k KEY_FILE``, ``--key_file KEY_FILE``
    Path to Google API key file.
+
+``-j JSON_FILE``, ``--json_file  JSON_FILE``
+   Read parameters from a JSON file.

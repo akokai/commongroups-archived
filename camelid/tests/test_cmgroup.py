@@ -15,7 +15,6 @@ PARAMS_LIST = cmg.params_from_json(PARAMS_JSON)
 
 # This creates test environment directories on filesystem as a side effect.
 env = CamelidEnv(project='test')
-shutil.copy(PARAMS_JSON, env.params_json)
 
 
 def test_cmgroup():
@@ -69,7 +68,7 @@ def test_pubchem_update():
 
 
 def test_batch_cmg_search():
-    groups = list(islice(cmg.cmgs_from_json(env), None))
+    groups = list(islice(cmg.cmgs_from_json(PARAMS_JSON, env), None))
 
     # To save time, only retrieve the first 3 CIDs.
     cmg.batch_cmg_search(groups, wait=30, listkey_count=3)

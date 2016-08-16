@@ -69,9 +69,6 @@ class CamelidEnv(object):
         self._results_path = pjoin(self._project_path, 'results')
         mkdir_p(self._results_path)
 
-        # Set file path to look for parameters in JSON format.
-        self._params_json = pjoin(self._project_path, 'params.json')
-
         # Store path to Google API credentials file.
         self._key_file = key_file
 
@@ -105,17 +102,6 @@ class CamelidEnv(object):
         """Path to project results directory."""
         return self._results_path
 
-    @property
-    def params_json(self):
-        """
-        Path to JSON file containing project CMG parameters.
-
-        This path is always ``<project path>/params.json``.
-        If starting or resuming a CMG update from JSON (instead of from the
-        Google Sheet), this is the file that should contains CMG parameters.
-        """
-        return self._params_json
-
     def add_project_handler(self):
         """
         Add a project-specific :class:`FileHandler` for all logging output.
@@ -148,7 +134,7 @@ class CamelidEnv(object):
         """
         if args.json_file:
             logger.info('Generating compound groups from JSON file')
-            cmg_gen = cmg.cmgs_from_json(self)
+            cmg_gen = cmg.cmgs_from_json(args.json_file, self)
         else:
             logger.info('Generating compound groups from Google Sheet')
             sheet = gs.SheetManager(self._key_file, self.worksheet)
@@ -181,17 +167,17 @@ def create_parser():
                         help='do not resume previous searches, and '
                              'delete existing data before starting',
                         default=False)
-    parser.add_argument('-w', '--worksheet', action='store', type=str,
-                        help='worksheet to get parameters from')
-    parser.add_argument('-j', '--json_file', action='store_true',
-                        help='read parameters from JSON file',
-                        default=False)
     parser.add_argument('-p', '--project', action='store', type=str,
                         help='project name')
     parser.add_argument('-e', '--env_path', action='store', type=str,
                         help='path to camelid home')
+    parser.add_argument('-w', '--worksheet', action='store', type=str,
+                        help='worksheet to get parameters from')
     parser.add_argument('-k', '--key_file', action='store', type=str,
                         help='path to Google API key file')
+    parser.add_argument('-j', '--json_file', action='store', type=str,
+                        help='read parameters from a JSON file',
+                        default=False)
     return parser
 
 
