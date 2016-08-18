@@ -29,6 +29,13 @@ Developer reference
     :members:
     :show-inheritance:
 
+``errors`` - Exceptions
+-----------------------
+
+.. automodule:: camelid.errors
+    :members:
+    :show-inheritance:
+
 ``run`` - The run script
 ------------------------
 

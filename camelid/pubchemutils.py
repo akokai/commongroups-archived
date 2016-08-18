@@ -24,6 +24,7 @@ import pubchempy as pcp
 
 from . import logconf
 from .casrnutils import validate, find_valid
+from .errors import WebServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -187,7 +188,7 @@ def filter_listkey_args(**kwargs):
         **kwargs: Arbitrary keyword arguments.
 
     Returns:
-        dict: Keyword arguments relating to ``ListKey`` pagination.
+        dict: Keyword arguments relating to ListKey pagination.
     """
     listkey_options = ['listkey_count', 'listkey_start']
     listkey_args = {k: kwargs[k] for k in kwargs if k in listkey_options}
@@ -203,7 +204,11 @@ def init_substruct_search(struct, method='smiles'):
         method (str): Structure input method. We mostly use `smiles`.
 
     Returns:
-        str: The asynchronous ``ListKey`` given in the server response.
+        str: The asynchronous ListKey given in the server response.
+
+    Raises:
+        :class:`camelid.errors.WebServiceError`: If server response is
+            something unexpected, like a gateway timeout.
     """
     search_path = '/compound/substructure/{0}/{1}/JSON'.format(method,
                                                                quote(struct))
@@ -214,7 +219,7 @@ def init_substruct_search(struct, method='smiles'):
     if search_req.status_code != 202:
         logger.error('Unexpected request status: %s', search_req.status_code)
         logger.error('Stopping attempted substructure search')
-        return None     # There may be something more useful to do here.
+        raise WebServiceError(search_req.status_code, search_req.text)
 
     listkey = str(search_req.json()['Waiting']['ListKey'])
     logger.debug('Search request status: %s; ListKey: %s',
@@ -224,10 +229,10 @@ def init_substruct_search(struct, method='smiles'):
 
 def retrieve_search_results(listkey, **kwargs):
     """
-    Retrieve search results from the PubChem API using the given ``ListKey``.
+    Retrieve async search results from PubChem API using the given ListKey.
 
     Parameters:
-        listkey (str): The ``ListKey`` for retrieving the search results.
+        listkey (str): The key for retrieving the search results.
         **kwargs: Arbitrary keyword arguments. For example, arguments relating
             to pagination of search results: ``listkey_count`` and
             ``listkey_start``. See the `PubChem API`_ documentation.
@@ -236,6 +241,10 @@ def retrieve_search_results(listkey, **kwargs):
 
     Returns:
         list: CIDs returned by the search.
+
+    Raises:
+        :class:`camelid.errors.WebServiceError`: If server response is
+            something unexpected, like a gateway timeout.
     """
     key_url = PUG_BASE + '/compound/listkey/{0}/cids/JSON'.format(listkey)
     listkey_args = filter_listkey_args(**kwargs) if kwargs else None
@@ -256,8 +265,12 @@ def retrieve_search_results(listkey, **kwargs):
         logger.info('PubChem search returned %i results', len(cids))
         return cids
     except IndexError:
-        logger.error('No CIDs found in substructure search results')
+        logger.error('No CIDs in substructure search results')
         return []
+    except KeyError:
+        # Happens when response is something unexpected, like gateway timeout.
+        logger.exception('Failed to retrieve search results.')
+        raise WebServiceError(key_req.status_code, key_req.text)
 
 
 def substruct_search(struct, method='smiles', wait=10, **kwargs):

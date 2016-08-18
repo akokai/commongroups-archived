@@ -4,6 +4,7 @@
 from __future__ import unicode_literals
 
 import os
+from os.path import join as pjoin
 import logging
 import json
 from itertools import islice
@@ -15,8 +16,19 @@ from boltons.jsonutils import JSONLIterator
 
 from . import logconf
 from . import pubchemutils as pc
+from .errors import WebServiceError
 
 logger = logging.getLogger(__name__)
+
+PARAMS_EMPTY = {
+    'materialid': None,
+    'name': '',
+    'searchtype': None,
+    'structtype': None,
+    'searchstring': None,
+    'last_updated': None,
+    'current_update': None
+}
 
 # The column headings used for Excel exports of group information:
 PARAMS_COLS = ['materialid', 'name', 'searchtype', 'structtype',
@@ -56,33 +68,38 @@ class CMGroup(object):
             logger.critical('Cannot initialize CMGroup without materialid')
             raise
 
+        logger.info('Creating %s', self)
+
         self._data_path = env.data_path
         self._results_path = env.results_path
 
-        logger.debug('Created %s', self)
-
-        self._params = params
-        self._listkey = None
+        # Parameters will be stored here, including updates during runtime.
+        self._params_file = pjoin(self._data_path,
+                                  '{}_params.json'.format(self.materialid))
 
         # Compounds list is stored in this JSONL file, one dict per line.
-        self._compounds_file = os.path.join(self._data_path,
-                                            self.materialid + '_cpds.jsonl')
+        self._compounds_file = pjoin(self._data_path,
+                                     '{}_cpds.jsonl'.format(self.materialid))
 
         # List of CIDs returned from last PubChem search would be stored here.
-        self._cids_file = os.path.join(self._data_path,
-                                       self.materialid + '_cids.json')
+        self._cids_file = pjoin(self._data_path,
+                                '{}_cids.json'.format(self.materialid))
+
+        self._params = self.get_params()
+        self._params.update(params)
+        self.save_params()
 
         # Determine whether we are checking for new additions to the group.
         try:
             date_args = [int(x) for x in
-                         self._params['last_updated'].split('-')]
+                         self.params['last_updated'].split('-')]
             self._last_updated = date(*date_args)
         except (KeyError, TypeError, ValueError):
             logger.info('No date or invalid date format for %s: '
                         'updates will retrieve all search results', self)
             self._last_updated = None
 
-        self._params['current_update'] = None
+        self._listkey = None
 
     @property
     def materialid(self):
@@ -90,10 +107,17 @@ class CMGroup(object):
         return self._materialid
 
     @property
+    def params(self):
+        """
+        Parameters used to construct the CMG, including any runtime changes.
+        """
+        return self._params
+
+    @property
     def name(self):
         """The name of the chemical/material group."""
-        if 'name' in self._params:
-            return self._params['name']
+        if 'name' in self.params:
+            return self.params['name']
 
     @property
     def searchtype(self):
@@ -102,50 +126,78 @@ class CMGroup(object):
 
         Currently only `substructure` is supported.
         """
-        if 'searchtype' in self._params:
-            return self._params['searchtype']
+        return self.params['searchtype']
 
     @property
     def structtype(self):
         """
-        The form of structure notation used for searching, e.g. `smiles`.
+        The form of structure notation used for searching, e.g. ``smiles``.
 
-        Currently only works with `smiles`.
+        Currently only works with ``smiles``.
         """
-        if 'structtype' in self._params:
-            return self._params['structtype']
+        return self.params['structtype']
 
     @property
     def searchstring(self):
         """
         Query for structure-based searches, e.g. a string in SMILES notation.
         """
-        if 'searchstring' in self._params:
-            return self._params['searchstring']
+        if 'searchstring' in self.params:
+            return self.params['searchstring']
 
     @property
     def last_updated(self):
         """
         When the group was last updated, according to the supplied parameters.
 
-        This property is either a python `datetime.date` object, or `None`.
-        Note that `datetime.date` can't be serialized to JSON or Excel
+        This property is either a :class:`datetime.date` object or ``None``.
+        Note that :class:`datetime.date` can't be serialized to JSON or Excel
         without first converting to string.
         """
         return self._last_updated
 
     @property
     def listkey(self):
-        """Temporary ListKey for asynchronous PubChem searches."""
         return self._listkey
 
     @listkey.setter
     def listkey(self, new_listkey):
         self._listkey = new_listkey
 
+    def save_params(self):
+        """
+        Write parameters to a JSON file in the project environment.
+
+        This allows some runtime-generated data (i.e., current update date)
+        to persist when resuming after a failure.
+        """
+        with open(self._params_file, 'w') as json_file:
+            logger.debug('Saving current parameters of %s to file', self)
+            json.dump(self.params, json_file)
+
+    def get_params(self):
+        """
+        Return saved parameters from a previous run, or default parameters.
+
+        Returns:
+            Parameters as container object, normally :class:`dict`.
+        """
+        try:
+            with open(self._params_file, 'r') as json_file:
+                logger.debug('Loading parameters from file for %s', self)
+                new_params = json.load(json_file)
+                return new_params
+        except (FileNotFoundError, json.JSONDecodeError):
+            logger.debug('No stored parameters found for %s', self)
+            return PARAMS_EMPTY
+
     def get_compounds(self):
         """
-        Read compounds (list of dicts) from file and store as an attribute.
+        Read the compounds list that has been written to to file.
+
+        Returns:
+            list: All the compounds that have been added to the group during
+                the update process; each compound is a :class:`dict`.
         """
         try:
             with open(self._compounds_file, 'r') as cpds_file:
@@ -176,27 +228,28 @@ class CMGroup(object):
         """
         Save the list of CIDs returned by the last PubChem search to file.
         """
-        logger.debug('Saving search results for %s containing %i CIDs',
-                     self, len(cids))
         with open(self._cids_file, 'w') as json_file:
+            logger.debug('Saving search results for %s containing %i CIDs',
+                         self, len(cids))
             json.dump(cids, json_file)
 
     def clear_data(self):
-        """Delete JSON files generated from previous operations."""
+        """Delete data files generated from previous operations."""
         logger.debug('Removing data for %s', self)
-        try:
-            os.remove(self._cids_file)
-            os.remove(self._compounds_file)
-        except OSError:
-            logger.exception('Failed to delete all files')
+        for file in (self._params_file,
+                     self._cids_file,
+                     self._compounds_file):
+            try:
+                os.remove(file)
+            except OSError:
+                logger.warning('Failed to delete %s', file)
 
     def __repr__(self):
-        """Return a string identifying the object."""
         return 'CMGroup({0})'.format(self.materialid)
 
     def to_excel(self, file_path=None):
         """
-        Output the list of compounds & parameters to an Excel spreadsheet.
+        Output the compounds list & group parameters to an Excel spreadsheet.
         """
         params_frame = DataFrame(self._params,
                                  columns=PARAMS_COLS, index=[0])
@@ -222,8 +275,8 @@ class CMGroup(object):
         if file_path:
             file_path = os.path.abspath(file_path)
         else:
-            file_path = os.path.join(self._results_path,
-                                     '{0}.xlsx'.format(self.materialid))
+            file_path = pjoin(self._results_path,
+                              '{0}.xlsx'.format(self.materialid))
 
         logger.info('Writing Excel output to: %s', file_path)
 
@@ -246,9 +299,12 @@ class CMGroup(object):
                 # Track date of current update:
                 self._params.update(
                     {'current_update': date.today().isoformat()})
+                self.save_params()
             else:
                 raise NotImplementedError('Sorry, can only do substructure '
                                           'searches in PubChem at this time')
+        except WebServiceError:
+            logger.exception('Failed to initiate PubChem search for %s', self)
         except KeyError:
             logger.exception('Missing parameters')
             raise
@@ -265,16 +321,17 @@ class CMGroup(object):
 
         listkey_args = pc.filter_listkey_args(**kwargs) if kwargs else None
 
-        if listkey_args:
-            cids = pc.retrieve_search_results(self.listkey, **listkey_args)
-        else:
-            cids = pc.retrieve_search_results(self.listkey)
+        try:
+            if listkey_args:
+                cids = pc.retrieve_search_results(self.listkey, **listkey_args)
+            else:
+                cids = pc.retrieve_search_results(self.listkey)
 
-        # This sets `self.returned_cids` and also saves the list to JSON.
-        self.save_returned_cids(cids)
-
-        logger.debug('Clearing ListKey for %s', self)
-        self.listkey = None
+            self.save_returned_cids(cids)
+            logger.debug('Clearing ListKey for %s', self)
+            self.listkey = None
+        except WebServiceError:
+            logger.exception('Failed to retrieve search results for %s', self)
 
     def update_from_cids(self):
         """
@@ -343,8 +400,8 @@ def batch_cmg_search(groups, resume_update=False, wait=120, **kwargs):
 
     Parameters:
         groups (iterable): The CMGs to be updated.
-        resume_update (bool): If `True`, does not perform a search, but looks
-            for previous search results saved in the project environment
+        resume_update (bool): If `True`, does not perform a new search, but
+            looks for previous search results saved in the project environment
             and continues the update process for those search results.
         wait (int): Delay (seconds) before retrieving async search results.
         **kwargs: Arbitrary keyword arguments, such as for pagination of
@@ -384,18 +441,19 @@ def params_from_json(params_file):
     return params_list
 
 
-def cmgs_from_json(env):
+def cmgs_from_json(json_file, env):
     """
-    Generate :class:`camelid.cmgroup.CMGroup` objects from a JSON file.
+    Generate :class:`CMGroup` objects from a JSON file.
 
     Parameters:
+        json_file (str): Path to a JSON file containing parameters for any
+            number of CMGs.
         env (:class:`camelid.run.CamelidEnv`): The project environment. This
-            determines the path to the JSON file and the environment used for
-            the :class:`CMGroup` objects that are created.
+            determines the environment used for the :class:`CMGroup` objects.
 
     Yields:
         :class:`CMGroup`: Chemical/material group objects.
     """
-    logger.debug('Reading group parameters from %s', env.params_json)
-    for params in params_from_json(env.params_json):
+    logger.debug('Reading group parameters from %s', json_file)
+    for params in params_from_json(json_file):
         yield CMGroup(params, env)
