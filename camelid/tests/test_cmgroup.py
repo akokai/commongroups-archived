@@ -35,7 +35,6 @@ def test_params():
     new_group = cmg.CMGroup(PARAMS_LIST[0], env)
     new_params = new_group.params
     assert new_params['current_update'] is not None
-    group.clear_data()
 
 
 def test_clear_data():
@@ -47,7 +46,6 @@ def test_clear_data():
     group.clear_data()
     assert group.get_compounds() == []
     assert group.get_returned_cids() == []
-    group.clear_data()
 
 
 def test_resume_update():
