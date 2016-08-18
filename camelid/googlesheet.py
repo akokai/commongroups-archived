@@ -18,6 +18,7 @@ from oauth2client.service_account import ServiceAccountCredentials as SAC
 
 from . import logconf
 from .cmgroup import CMGroup
+from .errors import NoCredentialsError
 
 logger = logging.getLogger(__name__)
 
@@ -27,17 +28,6 @@ TITLE = 'CMG parameters'
 DEFAULT_WORKSHEET = 'new CMGs'
 PARAMS_COLS = ['materialid', 'name', 'searchtype',
                'structtype', 'searchstring', 'last_updated']
-
-
-class NoCredentialsError(Exception):
-    """Raised when there is no Google API credentials file."""
-    def __init__(self, path):
-        super().__init__(self)
-        self.path = path
-
-    def __str__(self):
-        msg = 'Google API credentials key file not found: {0}'
-        return msg.format(self.path)
 
 
 class SheetManager(object):
@@ -54,7 +44,7 @@ class SheetManager(object):
             a default value.
 
     Raises:
-        :class:`camelid.googlesheet.NoCredentialsError`: If the API
+        :class:`camelid.errors.NoCredentialsError`: If the API
             credentials are missing or cannot be parsed from JSON.
 
     Notes:
@@ -131,6 +121,10 @@ class SheetManager(object):
         """
         Get group parameters from the worksheet and output to a JSON file.
 
+        This could be useful for documentation purposes, but is not needed for
+        keeping records of search parameters. Each CMG automatically saves its
+        parameters to a JSON file in the ``data`` directory of the project.
+
         Parameters:
             file (str): Path to output file.
 
@@ -143,5 +137,6 @@ class SheetManager(object):
         group_params = list(islice(self.get_params(), None))
 
         file_path = os.path.abspath(file)
+        logger.debug('Writing parameters to file: %s', file_path)
         with open(file_path, 'w') as params_file:
             json.dump(group_params, params_file, indent=2, sort_keys=True)

@@ -131,6 +131,10 @@ class CamelidEnv(object):
 
         Parameters:
             args (dict): Parsed command-line arguments.
+
+        Notes:
+            The "resume update" option is handled by
+            :func:`camelid.cmgroup.batch_cmg_search`.
         """
         if args.json_file:
             logger.info('Generating compound groups from JSON file')
@@ -178,12 +182,22 @@ def create_parser():
     parser.add_argument('-j', '--json_file', action='store', type=str,
                         help='read parameters from a JSON file',
                         default=False)
+    parser.add_argument('-v', '--level', action='count',
+                        help='lower console logging level (see more output)')
     return parser
+
+
+def set_console_loglevel(level):
+    console = logger.handlers[0]
+    if level > 0:
+        console.setLevel('DEBUG')
 
 
 def main():
     parser = create_parser()
     args = parser.parse_args()
+    set_console_loglevel(args.level)
+
     env = CamelidEnv(args.env_path, args.project,
                      args.worksheet, args.key_file)
     env.run(args)

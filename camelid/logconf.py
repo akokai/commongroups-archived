@@ -19,6 +19,7 @@ CONFIG = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'level': 'INFO',
             'formatter': 'default',
             'stream': sys.stdout
         }

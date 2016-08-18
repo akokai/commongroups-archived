@@ -16,6 +16,7 @@ from boltons.jsonutils import JSONLIterator
 
 from . import logconf
 from . import pubchemutils as pc
+from .errors import WebServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -67,8 +68,7 @@ class CMGroup(object):
             logger.critical('Cannot initialize CMGroup without materialid')
             raise
 
-        self._params = self.load_params()
-        self._params.update(params)
+        logger.info('Creating %s', self)
 
         self._data_path = env.data_path
         self._results_path = env.results_path
@@ -85,6 +85,10 @@ class CMGroup(object):
         self._cids_file = pjoin(self._data_path,
                                 '{}_cids.json'.format(self.materialid))
 
+        self._params = self.get_params()
+        self._params.update(params)
+        self.save_params()
+
         # Determine whether we are checking for new additions to the group.
         try:
             date_args = [int(x) for x in
@@ -96,8 +100,6 @@ class CMGroup(object):
             self._last_updated = None
 
         self._listkey = None
-
-        logger.debug('Created %s', self)
 
     @property
     def materialid(self):
@@ -173,7 +175,7 @@ class CMGroup(object):
             logger.debug('Saving current parameters of %s to file', self)
             json.dump(self.params, json_file)
 
-    def load_params(self):
+    def get_params(self):
         """
         Return saved parameters from a previous run, or default parameters.
 
@@ -234,12 +236,13 @@ class CMGroup(object):
     def clear_data(self):
         """Delete data files generated from previous operations."""
         logger.debug('Removing data for %s', self)
-        try:
-            os.remove(self._params_file)
-            os.remove(self._cids_file)
-            os.remove(self._compounds_file)
-        except OSError:
-            logger.exception('Failed to delete all files')
+        for file in (self._params_file,
+                     self._cids_file,
+                     self._compounds_file):
+            try:
+                os.remove(file)
+            except OSError:
+                logger.warning('Failed to delete %s', file)
 
     def __repr__(self):
         return 'CMGroup({0})'.format(self.materialid)
@@ -316,16 +319,17 @@ class CMGroup(object):
 
         listkey_args = pc.filter_listkey_args(**kwargs) if kwargs else None
 
-        if listkey_args:
-            cids = pc.retrieve_search_results(self.listkey, **listkey_args)
-        else:
-            cids = pc.retrieve_search_results(self.listkey)
+        try:
+            if listkey_args:
+                cids = pc.retrieve_search_results(self.listkey, **listkey_args)
+            else:
+                cids = pc.retrieve_search_results(self.listkey)
 
-        # This sets self.returned_cids and also saves the list to JSON.
-        self.save_returned_cids(cids)
-
-        logger.debug('Clearing ListKey for %s', self)
-        self.listkey = None
+            self.save_returned_cids(cids)
+            logger.debug('Clearing ListKey for %s', self)
+            self.listkey = None
+        except WebServiceError:
+            logger.exception('Search failed for %s', self)
 
     def update_from_cids(self):
         """
@@ -394,8 +398,8 @@ def batch_cmg_search(groups, resume_update=False, wait=120, **kwargs):
 
     Parameters:
         groups (iterable): The CMGs to be updated.
-        resume_update (bool): If `True`, does not perform a search, but looks
-            for previous search results saved in the project environment
+        resume_update (bool): If `True`, does not perform a new search, but
+            looks for previous search results saved in the project environment
             and continues the update process for those search results.
         wait (int): Delay (seconds) before retrieving async search results.
         **kwargs: Arbitrary keyword arguments, such as for pagination of

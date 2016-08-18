@@ -104,3 +104,7 @@ Use the option ``--help`` to get a list of all the options. Here is a partial li
 
 ``-j JSON_FILE``, ``--json_file  JSON_FILE``
    Read parameters from a JSON file.
+
+``-v``, ``--level``
+   Lower console logging level (see more output); does not effect file logging level.
+
