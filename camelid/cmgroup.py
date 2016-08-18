@@ -303,6 +303,8 @@ class CMGroup(object):
             else:
                 raise NotImplementedError('Sorry, can only do substructure '
                                           'searches in PubChem at this time')
+        except WebServiceError:
+            logger.exception('Failed to initiate PubChem search for %s', self)
         except KeyError:
             logger.exception('Missing parameters')
             raise
@@ -329,7 +331,7 @@ class CMGroup(object):
             logger.debug('Clearing ListKey for %s', self)
             self.listkey = None
         except WebServiceError:
-            logger.exception('Search failed for %s', self)
+            logger.exception('Failed to retrieve search results for %s', self)
 
     def update_from_cids(self):
         """
