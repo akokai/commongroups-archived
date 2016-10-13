@@ -30,7 +30,7 @@ SELECT = {k: re.compile(v) for k, v in SELECT_RX.items()}
 
 def select_name(synonym):
     """
-    Determine a synonym is likely to be a human-readable name.
+    Determine if a synonym is likely to be a human-readable name.
 
     Parameters:
         synonym (str): The synonym to check.
