@@ -24,6 +24,7 @@ def cids_to_html(cids, html_file, title='PubChem graphics', size=500):
 
     css = """
     body {font-family: monospace;}
+    h1 {position: fixed; top: 8px; left: 8px;}
     table {width: 100%;}
     td {text-align: center; padding: 8px;}
     """
