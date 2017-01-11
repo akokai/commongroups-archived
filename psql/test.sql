@@ -4,7 +4,7 @@
 -- -- Read tab-separated values from file, ignore header
 -- create table dtx_pubchem (sid text, cid text, dtxsid text);
 --     copy dtx_pubchem from '/opt/akokai/data/EPA/PubChem_DTXSID_mapping_file.txt'
---     with (format text, delimiter '\t', header);
+--     with (format csv, delimiter '\t', header);
 
 -- -- Find CASRN and Name for each DTXSID in table of molecules 
 -- select dtx_cas.casrn, dtx_cas.name
