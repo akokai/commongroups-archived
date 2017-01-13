@@ -1,0 +1,11 @@
+#!/usr/bin/awk
+
+BEGIN {
+    FS="\t"
+    OFS="\t"
+}
+{ gsub(/"/, "\"\"") }
+{
+    for (i=1; i<=NF; i++)
+        $i="\"" $i "\""
+} 1
