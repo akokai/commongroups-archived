@@ -30,12 +30,17 @@ CONFIG = {
             'handlers': ['console'],
             'propagate': False
         },
+        'camelid.cmgroup': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            'propagate': False
+        },
         'camelid.googlesheet': {
             'level': 'DEBUG',
             'handlers': ['console'],
             'propagate': False
         },
-        'camelid.cmgroup': {
+        'camelid.ids': {
             'level': 'DEBUG',
             'handlers': ['console'],
             'propagate': False
