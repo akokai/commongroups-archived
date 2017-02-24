@@ -3,7 +3,7 @@
 
 import os
 
-from ..run import CamelidEnv
+from ..env import CamelidEnv
 
 
 def test_camelidenv():

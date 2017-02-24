@@ -30,21 +30,21 @@ CONFIG = {
             'handlers': ['console'],
             'propagate': False
         },
-        'camelid.googlesheet': {
-            'level': 'DEBUG',
-            'handlers': ['console'],
-            'propagate': False
-        },
-        'camelid.cmgroup': {
-            'level': 'DEBUG',
-            'handlers': ['console'],
-            'propagate': False
-        },
-        'camelid.pubchemutils': {
-            'level': 'DEBUG',
-            'handlers': ['console'],
-            'propagate': False
-        },
+        # 'camelid.googlesheet': {
+        #     'level': 'DEBUG',
+        #     'handlers': ['console'],
+        #     'propagate': False
+        # },
+        # 'camelid.cmgroup': {
+        #     'level': 'DEBUG',
+        #     'handlers': ['console'],
+        #     'propagate': False
+        # },
+        # 'camelid.pubchemutils': {
+        #     'level': 'DEBUG',
+        #     'handlers': ['console'],
+        #     'propagate': False
+        # },
         'pubchempy': {
             'level': 'DEBUG',
             'handlers': ['console'],

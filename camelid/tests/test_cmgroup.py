@@ -5,7 +5,7 @@ import os
 import shutil
 from itertools import islice
 
-from ..run import CamelidEnv
+from ..env import CamelidEnv
 from .. import cmgroup as cmg
 
 # Locate the test params to use.

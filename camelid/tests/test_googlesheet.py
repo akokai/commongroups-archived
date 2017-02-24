@@ -5,7 +5,7 @@ from os.path import join as pjoin
 from itertools import islice
 
 from .. import googlesheet as gs
-from ..run import CamelidEnv
+from ..env import CamelidEnv
 
 sheet = gs.SheetManager(worksheet='test')
 env = CamelidEnv(project='test')
