@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+
 """Logging configuration."""
 
 from __future__ import unicode_literals

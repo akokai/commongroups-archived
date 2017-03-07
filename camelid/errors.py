@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Specially defined exceptions that may be raised in the camelid package.
-"""
+# coding: utf-8
 
-from __future__ import unicode_literals
-
+"""
+Special errors for camelid.
+"""
 
 class CamelidError(Exception):
     """Base Exception for all camelid errors."""

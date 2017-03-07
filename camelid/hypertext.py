@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+
 """
 Functions for generating HTML output.
 """

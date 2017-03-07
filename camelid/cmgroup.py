@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+
 """Chemical and material group class definition."""
 
 from __future__ import unicode_literals
@@ -20,7 +21,8 @@ from .errors import WebServiceError
 
 logger = logging.getLogger(__name__)
 
-PARAMS_EMPTY = {
+# TODO: Update
+BASE_PARAMS = {
     'materialid': None,
     'name': '',
     'searchtype': None,
@@ -30,6 +32,7 @@ PARAMS_EMPTY = {
     'current_update': None
 }
 
+# TODO: Update
 # The column headings used for Excel exports of group information:
 PARAMS_COLS = ['materialid', 'name', 'searchtype', 'structtype',
                'searchstring', 'last_updated', 'current_update',
@@ -47,19 +50,17 @@ EXPORT_COLS = ['CASRN',         # Generated from CASRN_list upon export
                'creation_date']
 
 
-class CMGroup(object):
+class CMGroup(object):  # TODO: Add better description in docstring
     """
     Chemical and material group class.
 
-    Data are stored as filed in the project environment associated with the
-    :class:`CMGroup`.
+    Data, logs, and common parameters for each :class:`CMGroup` are managed by
+    an associated :class:`camelid.run.CamelidEnv` project environment.
 
     Parameters:
         params (dict): A dictionary containing the parameters of the compound
-            group. It should contain: ``materialid``, ``name``,
-            ``searchtype``, ``structtype``, ``searchstring``, and
-            ``last_updated``. (For now...)
-        env (:class:`camelid.run.CamelidEnv`): The project environment to use.
+            group. Its keys should include all the keys in ``BASE_PARAMS``.
+        env (:class:`camelid.env.CamelidEnv`): The project environment to use.
     """
     def __init__(self, params, env):
         try:
@@ -189,7 +190,7 @@ class CMGroup(object):
                 return new_params
         except (FileNotFoundError, json.JSONDecodeError):
             logger.debug('No stored parameters found for %s', self)
-            return PARAMS_EMPTY
+            return BASE_PARAMS
 
     def get_compounds(self):
         """
@@ -247,7 +248,12 @@ class CMGroup(object):
     def __repr__(self):
         return 'CMGroup({0})'.format(self.materialid)
 
-    def to_excel(self, file_path=None):
+    def to_html_by_cid(self, out_path=None):
+        # TODO
+        # see hypertext.cids_to_html
+        pass
+
+    def to_excel(self, out_path=None):  # TODO: Will need update.
         """
         Output the compounds list & group parameters to an Excel spreadsheet.
         """
@@ -272,15 +278,15 @@ class CMGroup(object):
         params_frame.num_compounds = len(compounds_frame)
         params_frame.num_casrn = compounds_frame.CASRN.count()
 
-        if file_path:
-            file_path = os.path.abspath(file_path)
+        if out_path:
+            out_path = os.path.abspath(out_path)
         else:
-            file_path = pjoin(self._results_path,
+            out_path = pjoin(self._results_path,
                               '{0}.xlsx'.format(self.materialid))
 
-        logger.info('Writing Excel output to: %s', file_path)
+        logger.info('Writing Excel output to: %s', out_path)
 
-        with ExcelWriter(file_path) as writer:
+        with ExcelWriter(out_path) as writer:
             params_frame.to_excel(writer, sheet_name='CMG Parameters')
             compounds_frame.to_excel(writer, sheet_name='Compounds')
 
@@ -394,6 +400,7 @@ class CMGroup(object):
             raise NotImplementedError
 
 
+# TODO: This should create a browseable HTML directory of all groups.
 def batch_cmg_search(groups, resume_update=False, wait=120, **kwargs):
     """
     Perform PubChem searches for many CMGs and output all to Excel files.

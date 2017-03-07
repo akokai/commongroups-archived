@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+
 """
 Functions to get compound information from PubChem using web services.
 
