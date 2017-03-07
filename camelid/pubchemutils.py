@@ -23,7 +23,7 @@ import requests
 import pubchempy as pcp
 
 from . import logconf
-from .casrnutils import validate, find_valid
+from . import casrnutils
 from .errors import WebServiceError
 
 logger = logging.getLogger(__name__)
@@ -84,7 +84,7 @@ def get_known_casrns(cid):
 
     def visit(path, key, value):
         if value['Name'] == 'CAS':
-            if validate(value['StringValue'], boolean=True):
+            if casrnutils.validate(value['StringValue'], boolean=True):
                 casrns.add(value['StringValue'])
             else:
                 logger.debug('Found invalid CASRN [%s] for CID %s',
@@ -122,7 +122,7 @@ def get_compound_info(cid):
 
     try:
         # This involves another API request for `cpd.synoynms`:
-        cas_synonyms = find_valid(' '.join(cpd.synonyms))
+        cas_synonyms = casrnutils.find(' '.join(cpd.synonyms))
         sleep(0.2)
         logger.debug('Found %i CASRNs in synonyms for CID %s',
                      len(cas_synonyms), cid)

@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+
+# This module is from:
+# chemex - https://github.com/akokai/chemex
+
 """Functions for dealing with CAS Registry Numbers (CASRN)."""
 
 from __future__ import unicode_literals
