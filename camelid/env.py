@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 """Automatically populate and update chemical & material groups."""
 
 from __future__ import unicode_literals
@@ -23,25 +23,33 @@ class CamelidEnv(object):
     """
     Run environment for :mod:`camelid`. Prefers desert or alpine habitats.
 
+    This object keeps track of a project environment (i.e., file locations
+    for data and logs, common parameters) for many instances of
+    :class:`camelid.cmgroup.CMGroup`.
+
+    Instantiating this class creates a directory structure and a log file.
+    Namely, a project directory corresponding to ``project_path`` and its
+    subdirectories ``results_path``, ``log_path``, ``data_path``. The
+    project directory is created within the "home" directory corresponding
+    to ``env_path``. A new log file is created each time a new ``CamelidEnv``
+    with the same project name is created.
+
     Parameters:
         env_path (str): Path to root camelid home. If not specified,
             looks for environment variable ``CAMELID_HOME`` or defaults to
             ``~/camelid_data``.
-        project (str): Project name. If unspecified, defaults to
-            ``'default'``.
+        project (str): Project name. Used to name the project directory.
+        database (str): Database URL for connecting to structure-searchable
+            database.
         worksheet (str): Title of the *worksheet* to look for CMG parameters
-            within the Google Sheet. Optional; if unspecified, filled in by
-            :class:`camelid.googlesheet.SheetManager`.
-        key_file (str): Path to Google service account credentials
-            JSON file. If unspecified here, attempts to locate it are made by
-            :class:`camelid.googlesheet.SheetManager`.
+            within the Google Sheet. Optional, used for testing. Default
+            value is provided by :class:`camelid.googlesheet.SheetManager`.
     """
     def __init__(self,
                  env_path=None,
-                 project=None,
-                 worksheet=None,
-                 key_file=None):
-        # Establish path to camelid home.
+                 project='default',
+                 database=None,
+                 worksheet=None):
         if env_path:
             self._env_path = os.path.abspath(env_path)
         elif os.getenv('CAMELID_HOME'):
@@ -49,8 +57,7 @@ class CamelidEnv(object):
         else:
             self._env_path = pjoin(os.path.expanduser('~'), 'camelid_data')
 
-        # Establish project location.
-        project = project or 'default'
+        self._name = project
         self._project_path = pjoin(self._env_path, project)
         mkdir_p(self._project_path)
 
@@ -62,17 +69,17 @@ class CamelidEnv(object):
         self.add_project_handler()
         logger.info('Project path: %s', self._project_path)
 
+        if database is None:
+            logger.warning('No database URL given: %s', self)
+        self._database = database
+        self._worksheet = worksheet
+
         # Set up data and results directories.
         self._data_path = pjoin(self._project_path, 'data')
         mkdir_p(self._data_path)
         self._results_path = pjoin(self._project_path, 'results')
         mkdir_p(self._results_path)
 
-        # Store path to Google API credentials file.
-        self._key_file = key_file
-
-        # Set worksheet to look for parameters in Google Sheet.
-        self.worksheet = worksheet
 
     @property
     def project_path(self):
@@ -91,15 +98,25 @@ class CamelidEnv(object):
 
     @property
     def data_path(self):
-        """
-        Path to the project data directory.
-        """
+        """Path to the project data directory."""
         return self._data_path
 
     @property
     def results_path(self):
-        """Path to project results directory."""
         return self._results_path
+
+    @property
+    def database(self):
+        return self._database
+
+    @property
+    def worksheet(self):
+        return self._worksheet
+
+    def __repr__(self):
+        params = ', '.join(self._env_path, self._name,
+                           self.database, self.worksheet)
+        return 'CamelidEnv({})'.format(params)
 
     def add_project_handler(self):
         """
@@ -122,7 +139,7 @@ class CamelidEnv(object):
         for item in iglob(pjoin(self.log_path, '*.log')):
             os.remove(item)
 
-    def run(self, args):
+    def run(self, args):  # TODO: Update!
         """
         Perform operations specified by the arguments.
 
@@ -140,7 +157,7 @@ class CamelidEnv(object):
             cmg_gen = cmg.cmgs_from_json(args.json_file, self)
         else:
             logger.info('Generating compound groups from Google Sheet')
-            sheet = gs.SheetManager(self._key_file, self.worksheet)
+            sheet = gs.SheetManager(self.worksheet)
             cmg_gen = sheet.get_cmgs(self)
 
         groups = list(islice(cmg_gen, None))
@@ -153,6 +170,7 @@ class CamelidEnv(object):
 
         logger.info('Starting batch CMG update process')
         try:
-            cmg.batch_cmg_search(groups, args.resume_update)
+            cmg.batch_cmg_search(groups)
         except:
             logger.exception('Process failed')
+            import pdb; pdb.set_trace()
