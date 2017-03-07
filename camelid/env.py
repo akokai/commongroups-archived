@@ -1,4 +1,5 @@
 # coding: utf-8
+
 """Automatically populate and update chemical & material groups."""
 
 from __future__ import unicode_literals
@@ -41,15 +42,11 @@ class CamelidEnv(object):
         project (str): Project name. Used to name the project directory.
         database (str): Database URL for connecting to structure-searchable
             database.
-        worksheet (str): Title of the *worksheet* to look for CMG parameters
-            within the Google Sheet. Optional, used for testing. Default
-            value is provided by :class:`camelid.googlesheet.SheetManager`.
     """
     def __init__(self,
                  env_path=None,
                  project='default',
-                 database=None,
-                 worksheet=None):
+                 database=None):
         if env_path:
             self._env_path = os.path.abspath(env_path)
         elif os.getenv('CAMELID_HOME'):
@@ -72,7 +69,6 @@ class CamelidEnv(object):
         if database is None:
             logger.warning('No database URL given: %s', self)
         self._database = database
-        self._worksheet = worksheet
 
         # Set up data and results directories.
         self._data_path = pjoin(self._project_path, 'data')
@@ -109,13 +105,8 @@ class CamelidEnv(object):
     def database(self):
         return self._database
 
-    @property
-    def worksheet(self):
-        return self._worksheet
-
     def __repr__(self):
-        params = ', '.join(self._env_path, self._name,
-                           self.database, self.worksheet)
+        params = ', '.join(self._env_path, self._name, self.database)
         return 'CamelidEnv({})'.format(params)
 
     def add_project_handler(self):
@@ -157,7 +148,7 @@ class CamelidEnv(object):
             cmg_gen = cmg.cmgs_from_json(args.json_file, self)
         else:
             logger.info('Generating compound groups from Google Sheet')
-            sheet = gs.SheetManager(self.worksheet)
+            sheet = gs.SheetManager(args.sheet_name, args.worksheet)
             cmg_gen = sheet.get_cmgs(self)
 
         groups = list(islice(cmg_gen, None))

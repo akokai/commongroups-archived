@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+
 """
 Get CMG parameters from a Google Sheet.
 
@@ -24,8 +25,8 @@ logger = logging.getLogger(__name__)
 
 SCOPE = ['https://spreadsheets.google.com/feeds']
 
-TITLE = 'CMG parameters'
-DEFAULT_WORKSHEET = 'new CMGs'
+TITLE = 'CMG parameters'        # TODO: Make user-specified; assume private.
+DEFAULT_WORKSHEET = 'new CMGs'  # TODO: These details are specific to org.
 PARAMS_COLS = ['materialid', 'name', 'searchtype',
                'structtype', 'searchstring', 'last_updated']
 
@@ -52,7 +53,7 @@ class SheetManager(object):
         by key or by URL, but that functionality in :mod:`gspread` is broken
         because of the "New Sheets".
     """
-    def __init__(self, key_file=None, worksheet=None, title=TITLE):
+    def __init__(self, title=TITLE, worksheet=None, key_file=None):
         if key_file:
             _key_file = os.path.abspath(key_file)
         elif os.getenv('CAMELID_KEYFILE'):
