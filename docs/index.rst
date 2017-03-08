@@ -11,10 +11,11 @@ Contents
 
    intro
    design
+   install
    database
    usage
    developer
-
+.. credits [place before developer]
 
 Indices and tables
 ------------------

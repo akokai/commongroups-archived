@@ -1,24 +1,30 @@
 Instantiating a structure-searchable database
 =============================================
 
-A prerequisite for using ``camelid`` is a database of compounds searchable by chemical structure. There are no requirements for or limitations on what compounds and data sources are incorporated in the database. To 
+A prerequisite for using ``camelid`` is a database of compounds searchable by
+chemical structure. This is separate from the required software dependencies.
+We do not distribute a pre-made database, and there are no requirements for or
+limits on what compounds and data sources are included in the database.
+Nevertheless, we developed and tested ``camelid`` using a database compiled
+from public data sources, and this is probably a good starting point for most
+uses.
 
-
-Goal
-~~~~
-
-Bootstrap a chemical database with ~700,000 structures from the US EPA
-CompTox Dashboard's public dataset.
-
-Set up the database so that it can be used for substructure searching
-via the `RDKit PostgreSQL database
-cartridge <http://www.rdkit.org/docs/Cartridge.html>`_. Also include
-CASRNs and PubChem CIDs as much as possible.
+What follows here is a description of how a basic database can be constructed
+and prepared for use with ``camelid``. In a future release, there will be an
+installation program to automatically build this database.
 
 Data sources
 ~~~~~~~~~~~~
 
+The database contains ~700,000 structures from the `US EPA CompTox Dashboard`_
+public dataset.
+
+.. _US EPA CompTox Dashboard: https://comptox.epa.gov/dashboard
+
+
+
 ``dsstox_20160701.tsv``
+
 -  Downloaded from:
 https://comptox.epa.gov/dashboard/downloads (zip filename:
 DSSTox\_Mapping\_20160701.zip)
@@ -26,8 +32,7 @@ DSSTox\_Mapping\_20160701.zip)
 2016-12-14 (posted on EPA website)
 -  Accessed: 2017-01-05
  
--  "The DSSTOX
-mapping file contains mappings between the DSSTox substance identifier
+-  "The DSSTOX mapping file contains mappings between the DSSTox substance identifier
 (DTXSID) and the associated InChI String and InChI Key."
 
 ``Dsstox_CAS_number_name.xlsx``
@@ -48,14 +53,7 @@ Accessed: 2017-01-05
 is in TXT format and includes the PubChem SID, PubChem CID and DSSTox
 substance identifier (DTXSID)."
 
-Notes on software dependencies
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Requires:
--  a running instance of PostgreSQL with the RDKit cartridge
-installed
-(`instructions <https://github.com/rdkit/rdkit/blob/master/Docs/Book/Install.md>`_);
-- Python packages and dependencies: rdkit, sqlalchemy, psycopg2, pandas.
 
 
 Generate database table of structural representations
@@ -83,115 +81,7 @@ Notes
    very specific errors. The number of molecules we have in the end will
    probably be less than 700K.
 
-.. code:: ipython3
-
-    # To be able to re-run this code from scratch, first drop the table if it already exists:
-    # !psql chmdata -c 'drop table dtx;'
-
 This will take a while and use lots of CPU and memory...
-
-.. code:: ipython3
-
-    dtypes = {'dtxsid': types.Text,
-              'inchi': types.Text,
-              'inchikey': types.Text,
-              'bin': types.Binary}
-    
-    ninput = 719996
-    ncreated = 0
-    chunk = 10000
-    
-    dtx = pd.read_table(DTX_STRUCT, names=['dtxsid', 'inchi', 'inchikey'],
-                        chunksize=chunk, low_memory=True)
-    
-    for df in dtx:
-        df['mol'] = df.inchi.apply(Chem.MolFromInchi)
-        df.dropna(inplace=True)
-        n = len(df)
-        ncreated += n
-        print('{0} molecules created, {1} errors'.format(n, chunk - n))
-        df['bin'] = df.mol.apply(lambda m: m.ToBinary())
-        df.drop('mol', axis=1, inplace=True)
-        df.to_sql('dtx', conn, if_exists='append', index=False, chunksize=65536, dtype=dtypes)
-    
-    print('Total: {0} molecules created, {1} errors'.format(ncreated, ninput - ncreated))
-
-
-.. parsed-literal::
-
-    9996 molecules created, 4 errors
-    9985 molecules created, 15 errors
-    9994 molecules created, 6 errors
-    9995 molecules created, 5 errors
-    9995 molecules created, 5 errors
-    9993 molecules created, 7 errors
-    9997 molecules created, 3 errors
-    9989 molecules created, 11 errors
-    9996 molecules created, 4 errors
-    9993 molecules created, 7 errors
-    9989 molecules created, 11 errors
-    9993 molecules created, 7 errors
-    9992 molecules created, 8 errors
-    9988 molecules created, 12 errors
-    10000 molecules created, 0 errors
-    10000 molecules created, 0 errors
-    9998 molecules created, 2 errors
-    9996 molecules created, 4 errors
-    9994 molecules created, 6 errors
-    9993 molecules created, 7 errors
-    9998 molecules created, 2 errors
-    10000 molecules created, 0 errors
-    10000 molecules created, 0 errors
-    10000 molecules created, 0 errors
-    10000 molecules created, 0 errors
-    9999 molecules created, 1 errors
-    9998 molecules created, 2 errors
-    9996 molecules created, 4 errors
-    9990 molecules created, 10 errors
-    9998 molecules created, 2 errors
-    9998 molecules created, 2 errors
-    9992 molecules created, 8 errors
-    9996 molecules created, 4 errors
-    9995 molecules created, 5 errors
-    9992 molecules created, 8 errors
-    9998 molecules created, 2 errors
-    9998 molecules created, 2 errors
-    9997 molecules created, 3 errors
-    9994 molecules created, 6 errors
-    10000 molecules created, 0 errors
-    9995 molecules created, 5 errors
-    9996 molecules created, 4 errors
-    10000 molecules created, 0 errors
-    9993 molecules created, 7 errors
-    9995 molecules created, 5 errors
-    9998 molecules created, 2 errors
-    9999 molecules created, 1 errors
-    9997 molecules created, 3 errors
-    9998 molecules created, 2 errors
-    9986 molecules created, 14 errors
-    9999 molecules created, 1 errors
-    9999 molecules created, 1 errors
-    9996 molecules created, 4 errors
-    10000 molecules created, 0 errors
-    10000 molecules created, 0 errors
-    9995 molecules created, 5 errors
-    9993 molecules created, 7 errors
-    9998 molecules created, 2 errors
-    9991 molecules created, 9 errors
-    10000 molecules created, 0 errors
-    9991 molecules created, 9 errors
-    9994 molecules created, 6 errors
-    9989 molecules created, 11 errors
-    9987 molecules created, 13 errors
-    9987 molecules created, 13 errors
-    9995 molecules created, 5 errors
-    9992 molecules created, 8 errors
-    9990 molecules created, 10 errors
-    9991 molecules created, 9 errors
-    9992 molecules created, 8 errors
-    9991 molecules created, 9 errors
-    9989 molecules created, 11 errors
-    Total: 719631 molecules created, 365 errors
 
 
 Generate ``mol``-type column
