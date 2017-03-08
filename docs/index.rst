@@ -11,6 +11,7 @@ Contents
 
    intro
    design
+   database
    usage
    developer
 
