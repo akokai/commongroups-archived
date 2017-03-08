@@ -55,7 +55,7 @@ class CMGroup(object):  # TODO: Add better description in docstring
     Chemical and material group class.
 
     Data, logs, and common parameters for each :class:`CMGroup` are managed by
-    an associated :class:`camelid.run.CamelidEnv` project environment.
+    an associated :class:`camelid.env.CamelidEnv` project environment.
 
     Parameters:
         params (dict): A dictionary containing the parameters of the compound
@@ -455,7 +455,7 @@ def cmgs_from_json(json_file, env):
     Parameters:
         json_file (str): Path to a JSON file containing parameters for any
             number of CMGs.
-        env (:class:`camelid.run.CamelidEnv`): The project environment. This
+        env (:class:`camelid.env.CamelidEnv`): The project environment. This
             determines the environment used for the :class:`CMGroup` objects.
 
     Yields:

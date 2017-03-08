@@ -1,13 +1,6 @@
 Developer reference
 ===================
 
-``casrnutils`` - CASRN functions
---------------------------------
-
-.. automodule:: camelid.casrnutils
-    :members:
-    :show-inheritance:
-
 ``cmgroup`` - Chemical/material group
 -------------------------------------
 
@@ -26,6 +19,13 @@ Developer reference
 ----------------------------------------
 
 .. automodule:: camelid.pubchemutils
+    :members:
+    :show-inheritance:
+
+``casrnutils`` - CASRN functions
+--------------------------------
+
+.. automodule:: camelid.casrnutils
     :members:
     :show-inheritance:
 

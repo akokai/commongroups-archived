@@ -106,7 +106,7 @@ class SheetManager(object):
         Generate :class:`CMGroup` objects from parameters in spreadsheet rows.
 
         Parameters:
-            env (:class:`camelid.run.CamelidEnv`): The project environment
+            env (:class:`camelid.env.CamelidEnv`): The project environment
                 that the returned objects will use to store data, etc.
 
         Yields:
