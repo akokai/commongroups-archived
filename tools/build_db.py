@@ -5,47 +5,27 @@ Chemical database initialization
 """
 
 from os.path import join as pjoin
+import subprocess
+from subprocess import run
+
 import pandas as pd
 from rdkit import Chem
 from sqlalchemy import create_engine, types
 from sqlalchemy.sql import text
 
-# **Change any of the following lines as appropriate for your system.**
-
+# TODO: Configure from file or ask user for these.
 conn = create_engine('postgresql://akokai@localhost/chmdata')
-
 EPA_DATA_PATH = '/opt/akokai/data/EPA/'
-
 DTX_STRUCT = pjoin(EPA_DATA_PATH, 'dsstox_20160701.tsv')
 DTX_CASRNS = pjoin(EPA_DATA_PATH, 'Dsstox_CAS_number_name.xlsx')
 DTX_CIDS = pjoin(EPA_DATA_PATH, 'PubChem_DTXSID_mapping_file.txt')
-
-
-# ## Generate database table of structural representations
-#
-# - Taking the list of EPA InChI(Key)s and DSSTox substance IDs, convert each InChI into a RDKit `Mol` object. Then convert each `Mol` into its binary representation.
-# - Create a big table in PostgreSQL that adds a binary molecule-object column to the original EPA dataset. In other words, a table with columns `(dtxsid, inchi, inchikey, bin)`.
-#   - This is a necessary intermediate step because there is no `mol_from_inchi` method in the PGSQL RDKit extension, but there is a `mol_from_pkl` that builds molecules out of binary representations. Otherwise we could go straight from InChI to molecules in the SQL table.
-#   - The 720K rows seems to be too much to process in memory all at once, so I am going through the file lazily in chunks.
-#
-# ### Notes
-# - Use all-lowercase column names to avoid SQL mix-ups.
-# - RDKit will fail to create many of the molecules from InChI because of very specific errors. The number of molecules we have in the end will probably be less than 700K.
-
-# In[3]:
-
-# To be able to re-run this code from scratch, first drop the table if it already exists:
-# !psql chmdata -c 'drop table dtx;'
-
-
-# This will take a while and use lots of CPU and memory...
 
 dtypes = {'dtxsid': types.Text,
           'inchi': types.Text,
           'inchikey': types.Text,
           'bin': types.Binary}
 
-ninput = 719996
+ninput = int(run(['wc', '-l', DTX_STRUCT]))  # TODO...
 ncreated = 0
 chunk = 10000
 
