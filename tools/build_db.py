@@ -25,8 +25,8 @@ dtypes = {'dtxsid': types.Text,
           'inchikey': types.Text,
           'bin': types.Binary}
 
-ninput = int(run(['wc', '-l', DTX_STRUCT]))  # TODO...
-ncreated = 0
+created = 0
+errors = 0
 chunk = 10000
 
 dtx = pd.read_table(DTX_STRUCT, names=['dtxsid', 'inchi', 'inchikey'],
@@ -36,26 +36,17 @@ for df in dtx:
     df['mol'] = df.inchi.apply(Chem.MolFromInchi)
     df.dropna(inplace=True)
     n = len(df)
-    ncreated += n
+    created += n
+    errors += chunk - n
     print('{0} molecules created, {1} errors'.format(n, chunk - n))
     df['bin'] = df.mol.apply(lambda m: m.ToBinary())
     df.drop('mol', axis=1, inplace=True)
     df.to_sql('dtx', conn, if_exists='append', index=False, chunksize=65536, dtype=dtypes)
 
-print('Total: {0} molecules created, {1} errors'.format(ncreated, ninput - ncreated))
-
+print('Total: {0} molecules created, {1} errors'.format(created, errors))
 
 # ### Generate `mol`-type column
-#
 # Create a new table with columns `(dtxsid, inchi, inchikey, molecule)` where the last column contains RDKit `mol`-type structures.
-
-# In[3]:
-
-# To be able to re-run the code below, first drop the table:
-# !psql chmdata1 -c 'drop table chem;'
-
-
-# In[4]:
 
 cmd = text(
     '''create table chem
@@ -63,61 +54,31 @@ cmd = text(
 res = conn.execute(cmd)
 print(res.rowcount, 'rows created')
 
-
-# ### Check results
-
-# In[10]:
-
-assert res.rowcount == ncreated
-
-
-# In[5]:
-
-# Check that the table contains expected data...
-cmd = text('select * from chem limit 5;')
-conn.execute(cmd).fetchall()
-
+try:
+    assert res.rowcount == ncreated
+except AssertionError:
+    pass  # TODO
 
 # ## Import external ID mappings: DTXSID to CASRN, CID
-#
-# ### Load DTXSID:CASRN mappings
-#
-# Note that these are all 1:1 mappings. Using pandas here as an easy way to read in the Excel file.
 
-# In[12]:
+# ### Load DTXSID:CASRN mappings
+# Note that these are all 1:1 mappings.
+# Using pandas here as an easy way to read in the Excel file.
 
 dtx_cas = pd.read_excel(DTX_CASRNS)
 cas_cols = ['casrn', 'dtxsid', 'name']
 dtx_cas.columns = cas_cols
 print(len(dtx_cas), 'DTXSID:CASRN mappings')
 
-
-# In[13]:
-
 dtypes_cas = dict(zip(cas_cols, 3*[types.Text]))
 dtx_cas.to_sql('dtx_cas', conn, if_exists='replace', index=False, chunksize=65536, dtype=dtypes_cas)
 
-
-# In[14]:
-
-# Check that the table contains expected data...
-cmd = text('select * from dtx_cas limit 5;')
-conn.execute(cmd).fetchall()
-
-
 # ### Load DTXSID:CID mappings
-#
-# Each DTXSID is mapped onto one CID but non-uniquely (some share the same CID). Joining tables by DTXSID should ensure that the proper mapping is maintained (see: `ID mapping inspection.ipynb`).
-#
-# **Change the file path in the SQL `copy...` statement below to the appropriate path for your system.**
 
-# In[ ]:
+# Each DTXSID is mapped onto one CID but non-uniquely (some share the same CID).
+# Joining tables by DTXSID should ensure that the proper mapping is maintained.
 
-# To be able to re-run the code below, first drop the table:
-# !psql chmdata1 -c 'drop table dtx_pubchem;'
-
-
-# In[13]:
+# TODO: Change the file path in the SQL `copy` statement ...
 
 cmd = text('''
     create table dtx_pubchem (sid text, cid text, dtxsid text);
