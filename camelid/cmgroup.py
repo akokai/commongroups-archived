@@ -29,7 +29,8 @@ BASE_PARAMS = {
     'structtype': None,
     'searchstring': None,
     'last_updated': None,
-    'current_update': None
+    'current_update': None,
+    'notes': ''
 }
 
 # TODO: Update
@@ -95,13 +96,14 @@ class CMGroup(object):  # TODO: Add better description in docstring
             date_args = [int(x) for x in
                          self.params['last_updated'].split('-')]
             self._last_updated = date(*date_args)
-        except (KeyError, TypeError, ValueError):
+        except (AttributeError, KeyError, TypeError, ValueError):
             logger.info('No date or invalid date format for %s: '
                         'updates will retrieve all search results', self)
             self._last_updated = None
 
         self._listkey = None
 
+    # TODO: Update properties.
     @property
     def materialid(self):
         """The numeric ID of the chemical/material group."""
@@ -117,34 +119,34 @@ class CMGroup(object):  # TODO: Add better description in docstring
     @property
     def name(self):
         """The name of the chemical/material group."""
-        if 'name' in self.params:
-            return self.params['name']
+        if 'name' in self._params:
+            return self._params['name']
 
     @property
     def searchtype(self):
         """
         The type of structure-based search used to define this group.
-
-        Currently only `substructure` is supported.
         """
-        return self.params['searchtype']
+        return self._params['searchtype']
 
     @property
     def structtype(self):
         """
         The form of structure notation used for searching, e.g. ``smiles``.
-
-        Currently only works with ``smiles``.
         """
-        return self.params['structtype']
+        return self._params['structtype']
 
     @property
     def searchstring(self):
         """
         Query for structure-based searches, e.g. a string in SMILES notation.
         """
-        if 'searchstring' in self.params:
-            return self.params['searchstring']
+        if 'searchstring' in self._params:
+            return self._params['searchstring']
+
+    @property
+    def notes(self):
+        return self._params['notes']
 
     @property
     def last_updated(self):
@@ -282,7 +284,7 @@ class CMGroup(object):  # TODO: Add better description in docstring
             out_path = os.path.abspath(out_path)
         else:
             out_path = pjoin(self._results_path,
-                              '{0}.xlsx'.format(self.materialid))
+                             '{0}.xlsx'.format(self.materialid))
 
         logger.info('Writing Excel output to: %s', out_path)
 

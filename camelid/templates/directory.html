@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <style>
+      body {font-family: monospace;}
+      td {padding: 8px; vertical-align: middle;}
+    </style>
+  </head>
+  <body>
+    <h1>{title}</h1>
+    <table>
+      <thead>
+        <tr>
+          <td>materialid</td> <td>name</td> <td>notes</td>
+        </tr>
+      </thead>
+      <tbody>{#items}
+        <tr>
+          <td>{materialid}</td>
+          <td><a href="{materialid}.html">{name}</a></td>
+          <td>{notes}</td>
+        </tr>{/items}
+      </tbody>
+    </table>
+  </body>
+</html>

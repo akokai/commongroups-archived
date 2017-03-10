@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <style>
+      body {font-family: monospace;}
+      h1 {position: fixed; top: 8px; left: 8px;}
+      table {width: 100%;}
+      td {text-align: center; padding: 8px;}
+    </style>
+  </head>
+  <body>
+    <h1>{title}</h1>
+    <table>
+      <tbody>{#items} 
+        <tr>
+          <td>{.|s}</td>
+        </tr>{/items}
+      </tbody>
+    </table>
+  </body>
+</html>
