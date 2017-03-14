@@ -6,7 +6,7 @@ from rdkit.Chem.Draw import IPythonConsole
 from sqlalchemy import create_engine
 from sqlalchemy.sql import select, and_, or_, not_, text
 
-from . import logconf
+from camelid import logconf
 
 logger = logging.getLogger(__name__)
 

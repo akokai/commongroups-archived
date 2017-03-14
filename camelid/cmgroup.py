@@ -13,9 +13,9 @@ from datetime import date
 from pandas import DataFrame, ExcelWriter
 from boltons.jsonutils import JSONLIterator
 
-from . import logconf
-from . import pubchemutils as pc
-from .errors import WebServiceError
+from camelid import logconf
+from camelid import pubchemutils as pc
+from camelid.errors import WebServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +25,8 @@ BASE_PARAMS = {
     'name': '',
     'searchtype': None,
     'structtype': None,
-    'searchstring': None,
-    'last_updated': None,
-    'current_update': None,
+    'structure': None,
+    'function': None,
     'notes': ''
 }
 
@@ -258,7 +257,8 @@ class CMGroup(object):  # TODO: Add better description in docstring
         Output the compounds list & group parameters to an Excel spreadsheet.
         """
         params_frame = DataFrame(self._params,
-                                 columns=PARAMS_COLS, index=[0])
+                                 columns=list(self._params.keys())
+                                 index=[0])
         params_frame.set_index('materialid', inplace=True)
 
         compounds_frame = DataFrame(self.get_compounds(),

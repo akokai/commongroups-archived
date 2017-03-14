@@ -13,9 +13,9 @@ from itertools import islice
 
 from boltons.fileutils import mkdir_p
 
-from . import logconf
-from . import cmgroup as cmg
-from . import googlesheet as gs
+from camelid import logconf
+from camelid import cmgroup as cmg
+from camelid import googlesheet as gs
 
 logger = logging.getLogger(__name__)
 

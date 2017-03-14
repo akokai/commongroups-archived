@@ -17,9 +17,9 @@ from itertools import islice
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials as SAC
 
-from . import logconf
-from .cmgroup import CMGroup
-from .errors import NoCredentialsError
+from camelid import logconf
+from camelid.cmgroup import CMGroup
+from camelid.errors import NoCredentialsError
 
 logger = logging.getLogger(__name__)
 

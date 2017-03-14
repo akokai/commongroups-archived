@@ -4,7 +4,7 @@
 from itertools import islice
 from datetime import date
 
-from .. import pubchemutils as pc
+from camelid import pubchemutils as pc
 
 CIDS_WITH_CAS = [311, 2244]
 # The following might need to be changed if CASRNS are eventually added
