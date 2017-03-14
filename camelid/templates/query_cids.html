@@ -4,13 +4,16 @@
     <title>{title}</title>
     <style>
       body {font-family: monospace;}
-      h1 {position: fixed; top: 8px; left: 8px;}
+      .hdr {position: fixed; top: 8px; left: 8px;}
       table {width: 100%;}
       td {text-align: center; padding: 8px;}
     </style>
   </head>
   <body>
-    <h1>{title}</h1>
+    <div class='hdr'>
+      <h1>{title}</h1>
+      <p>{notes}</p>
+    </div>
     <table>
       <tbody>{#items} 
         <tr>

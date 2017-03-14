@@ -3,9 +3,12 @@
 """
 Functions for generating HTML output.
 """
+import os
 from os.path import join as pjoin
 from urllib.parse import urlencode
 from ashes import AshesEnv
+
+templates_dir = pjoin(os.path.dirname(os.path.abspath(__file__)), 'templates')
 
 
 def pc_img(cid, size=500):
@@ -19,13 +22,14 @@ def pc_img(cid, size=500):
     return '<a href="{0}"><img src="{1}"></a>'.format(cid_url, img_url)
 
 
-def cids_to_html(cids, html_file, title='PubChem graphics', size=500):
+def cids_to_html(cids, html_file, title='PubChem graphics', notes='', size=500):
     """
     Generate HTML file displaying PubChem structures for an iterable of CIDs.
     """
     context = {'title': title,
-               'items': [pc_img(cid) for cid in cids]}
-    templater = AshesEnv(['templates'])
+               'notes': notes,
+               'items': [pc_img(cid, size=size) for cid in cids]}
+    templater = AshesEnv([templates_dir])
     html = templater.render('query_cids.html', context)
     with open(html_file, 'w') as file:
         file.write(html)

@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 SCOPE = ['https://spreadsheets.google.com/feeds']
 
 TITLE = 'CMG parameters'        # TODO: Make user-specified; assume private.
-DEFAULT_WORKSHEET = 'new CMGs'  # TODO: These details are specific to org.
+DEFAULT_WORKSHEET = 'active'    # TODO: These details are specific to org.
 PARAMS_COLS = ['materialid', 'name', 'searchtype',
                'structtype', 'searchstring', 'last_updated']
 
