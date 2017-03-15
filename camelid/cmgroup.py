@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 # TODO: Update
 BASE_PARAMS = {
-    'materialid': None,
+    'cmg_id': None,
     'name': '',
     'searchtype': None,
     'structtype': None,
@@ -30,12 +30,7 @@ BASE_PARAMS = {
     'notes': ''
 }
 
-# TODO: Update
-# The column headings used for Excel exports of group information:
-PARAMS_COLS = ['materialid', 'name', 'searchtype', 'structtype',
-               'searchstring', 'last_updated', 'current_update',
-               'num_compounds', 'num_casrn']
-
+# TODO: Update or eliminate this
 # The column headings used for Excel exports of compound lists.
 # Most correspond to keys that will be present in compound data dicts
 # returned from PubChem searches. Some are generated upon export.
@@ -62,9 +57,9 @@ class CMGroup(object):  # TODO: Add better description in docstring
     """
     def __init__(self, params, env):
         try:
-            self._materialid = params['materialid']
+            self._cmg_id = params['cmg_id']
         except KeyError:
-            logger.critical('Cannot initialize CMGroup without materialid')
+            logger.critical('Cannot initialize CMGroup without cmg_id')
             raise
 
         logger.info('Creating %s', self)
@@ -74,15 +69,11 @@ class CMGroup(object):  # TODO: Add better description in docstring
 
         # Parameters will be stored here, including updates during runtime.
         self._params_file = pjoin(self._data_path,
-                                  '{}_params.json'.format(self.materialid))
+                                  '{}_params.json'.format(self.cmg_id))
 
         # Compounds list is stored in this JSONL file, one dict per line.
         self._compounds_file = pjoin(self._data_path,
-                                     '{}_cpds.jsonl'.format(self.materialid))
-
-        # List of CIDs returned from last PubChem search would be stored here.
-        self._cids_file = pjoin(self._data_path,
-                                '{}_cids.json'.format(self.materialid))
+                                     '{}_cpds.jsonl'.format(self.cmg_id))
 
         self._params = self.get_params()
         self._params.update(params)
@@ -102,28 +93,18 @@ class CMGroup(object):  # TODO: Add better description in docstring
 
     # TODO: Update properties.
     @property
-    def materialid(self):
+    def cmg_id(self):
         """The numeric ID of the chemical/material group."""
-        return self._materialid
-
-    @property
-    def params(self):
-        """
-        Parameters used to construct the CMG, including any runtime changes.
-        """
-        return self._params
+        return self._cmg_id
 
     @property
     def name(self):
-        """The name of the chemical/material group."""
         if 'name' in self._params:
             return self._params['name']
 
     @property
     def searchtype(self):
-        """
-        The type of structure-based search used to define this group.
-        """
+        if 'searchtype' in self.params
         return self._params['searchtype']
 
     @property
@@ -245,7 +226,7 @@ class CMGroup(object):  # TODO: Add better description in docstring
                 logger.warning('Failed to delete %s', file)
 
     def __repr__(self):
-        return 'CMGroup({0})'.format(self.materialid)
+        return 'CMGroup({0})'.format(self.cmg_id)
 
     def to_html_by_cid(self, out_path=None):
         # TODO
@@ -257,13 +238,13 @@ class CMGroup(object):  # TODO: Add better description in docstring
         Output the compounds list & group parameters to an Excel spreadsheet.
         """
         params_frame = DataFrame(self._params,
-                                 columns=list(self._params.keys())
-                                 index=[0])
-        params_frame.set_index('materialid', inplace=True)
+                                 columns=self._params.keys(),
+                                 index=[0]).set_index('cmg_id')
+        params_frame.set_index('cmg_id', inplace=True)
 
         compounds_frame = DataFrame(self.get_compounds(),
                                     columns=EXPORT_COLS)
-        compounds_frame.CMG_ID = self.materialid
+        compounds_frame.CMG_ID = self.cmg_id
         compounds_frame.Action = 'add'
 
         def first_casrn(casrns):
@@ -282,7 +263,7 @@ class CMGroup(object):  # TODO: Add better description in docstring
             out_path = os.path.abspath(out_path)
         else:
             out_path = pjoin(self._results_path,
-                             '{0}.xlsx'.format(self.materialid))
+                             '{0}.xlsx'.format(self.cmg_id))
 
         logger.info('Writing Excel output to: %s', out_path)
 
