@@ -20,11 +20,11 @@ All files generated when you use camelid are stored within a "home" environment.
 
 -  *Projects* can have any name you want, and will reside in a corresponding
    subdirectory within the camelid home. You can have any number of projects.
-   
+
    -  Project directories contain ``data``, ``log``, and ``results``
       subdirectories.
    -  If you don't specify a project, your data will go in
-      ``<camelid home>/default``. 
+      ``<camelid home>/default``.
    -  If you run the unit tests for :mod:`camelid`, some of them will create a
       project called ``test``.
 
@@ -82,29 +82,4 @@ The script can be run from the repository root directory using::
 Options
 ^^^^^^^
 
-Use the option ``--help`` to get a list of all the options. Here is a partial list of available options that may not reflect recent changes.
-
-``-r``, ``--resume_update``
-   Resume the previous update (e.g., if it failed).
-
-``-c``, ``--clean_start``
-   Do not resume previous searches, and delete existing data before starting.
-
-``-p PROJECT``, ``--project PROJECT``
-   Project name.
-
-``-e ENV_PATH``, ``--env_path ENV_PATH``
-   Path to camelid home.
-
-``-w WORKSHEET``, ``--worksheet WORKSHEET``
-   Worksheet to get parameters from.
-
-``-k KEY_FILE``, ``--key_file KEY_FILE``
-   Path to Google API key file.
-
-``-j JSON_FILE``, ``--json_file  JSON_FILE``
-   Read parameters from a JSON file.
-
-``-v``, ``--level``
-   Lower console logging level (see more output); does not effect file logging level.
-
+Use the option ``--help`` to get a list of all the options.

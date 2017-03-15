@@ -14,8 +14,8 @@ Contents
    install
    database
    usage
+   credits
    developer
-.. credits [place before developer]
 
 Indices and tables
 ------------------

@@ -6,10 +6,12 @@ General concepts
 
 This is what we are trying to accomplish.
 
-Chemical/material groups
-^^^^^^^^^^^^^^^^^^^^^^^^
+Compound groups
+^^^^^^^^^^^^^^^
 
-What are they...
+
+
+Krowech, G., Hoover, S., Plummer, L., Sandy, M., Zeise, L., & Solomon, G. (2016). Identifying chemical groups for biomonitoring. *Environmental Health Perspectives,* 124(12), A219–A226. https://doi.org/10.1289/EHP537
 
 
 Populating classes by structure-based searching

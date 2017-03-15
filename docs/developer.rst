@@ -8,33 +8,26 @@ Developer reference
     :members:
     :show-inheritance:
 
-``googlesheet`` - Google Sheet access
--------------------------------------
+``googlesheet`` - Google Sheets access
+--------------------------------------
 
 .. automodule:: camelid.googlesheet
     :members:
     :show-inheritance:
 
-``pubchemutils`` - PubChem API functions
-----------------------------------------
+ ``hypertext`` - Generating HTML output
+ --------------------------------------
 
-.. automodule:: camelid.pubchemutils
-    :members:
-    :show-inheritance:
+ .. automodule:: camelid.hypertext
+     :members:
+     :show-inheritance:
 
-``casrnutils`` - CASRN functions
---------------------------------
+  ``pubchemutils`` - PubChem API functions
+  ----------------------------------------
 
-.. automodule:: camelid.casrnutils
-    :members:
-    :show-inheritance:
-
-``errors`` - Exceptions
------------------------
-
-.. automodule:: camelid.errors
-    :members:
-    :show-inheritance:
+  .. automodule:: camelid.pubchemutils
+  :members:
+  :show-inheritance:
 
 ``run`` - The run script
 ------------------------
@@ -44,3 +37,17 @@ See :doc:`Usage <usage>` and :ref:`Running camelid <running>`.
 .. automodule:: camelid.run
     :members:
     :show-inheritance:
+
+ ``casrnutils`` - CASRN functions
+ --------------------------------
+
+ .. automodule:: camelid.casrnutils
+ :members:
+ :show-inheritance:
+
+ ``errors`` - Exceptions
+ -----------------------
+
+ .. automodule:: camelid.errors
+ :members:
+ :show-inheritance:

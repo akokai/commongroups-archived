@@ -1,0 +1,24 @@
+Credits
+=======
+
+This project is part of the `Chemical Hazard Data Commons`_ and supported by
+the `Healthy Building Network`_.
+
+The following people have contributed to `camelid`:
+
+-  Akos Kokai (concept, design, and coding)
+-  Michel Dedeo (concept and design)
+-  Fred Cauthen (design and coding)
+
+With review and guidance from Mahmoud Hashemi and David Faulkner.
+
+``camelid`` would not be possible without `RDKit`_ by Greg Landrum and
+colleagues.
+
+The `photo`_ of alpacas in Ecuador is by Philippe Lavoie and is in the public
+domain.
+
+.. _Chemical Hazard Data Commons: https://commons.healthymaterials.net/
+.. _Healthy Building Network: http://www.healthybuilding.net/
+.. _RDKit: http://rdkit.org/
+.. _photo: https://commons.wikimedia.org/wiki/File:Alpacas.JPG
