@@ -57,7 +57,7 @@ def directory(cmgs, env, title='CMG Processing results'):
     Generate HTML directory of results for multiple ``CMGroup``s.
     """
     context = {'title': title,
-               'items': [{'materialid': cmg.materialid,
+               'items': [{'cmg_id': cmg.cmg_id,
                           'name': cmg.name,
                           'notes': cmg.notes} for cmg in cmgs]}
     html_file = pjoin(env.results_path, 'index.html')

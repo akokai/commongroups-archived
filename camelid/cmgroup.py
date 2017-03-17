@@ -7,52 +7,38 @@ from os.path import join as pjoin
 import logging
 import json
 from itertools import islice
-from time import asctime, sleep
 from datetime import date
 
 from pandas import DataFrame, ExcelWriter
 from boltons.jsonutils import JSONLIterator
 
-from camelid import logconf
+from camelid import logconf  # pylint: disable=unused-import
 from camelid import pubchemutils as pc
 from camelid.errors import WebServiceError
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
-# TODO: Update
 BASE_PARAMS = {
     'cmg_id': None,
-    'name': '',
-    'searchtype': None,
-    'structtype': None,
+    'name': 'no name',
+    'method': None,
+    'structure_type': None,
     'structure': None,
     'function': None,
     'notes': ''
 }
 
-# TODO: Update or eliminate this
-# The column headings used for Excel exports of compound lists.
-# Most correspond to keys that will be present in compound data dicts
-# returned from PubChem searches. Some are generated upon export.
-EXPORT_COLS = ['CASRN',         # Generated from CASRN_list upon export
-               'IUPAC_name',
-               'CMG_ID',        # Generated from CMGroup attributes
-               'Action',
-               'CASRN_list',
-               'CID',
-               'creation_date']
-
 
 class CMGroup(object):  # TODO: Add better description in docstring
     """
-    Chemical and material group class.
+    Compound group class.
 
     Data, logs, and common parameters for each :class:`CMGroup` are managed by
     an associated :class:`camelid.env.CamelidEnv` project environment.
 
     Parameters:
         params (dict): A dictionary containing the parameters of the compound
-            group. Its keys should include all the keys in ``BASE_PARAMS``.
+            group. See :doc:`params`.
         env (:class:`camelid.env.CamelidEnv`): The project environment to use.
     """
     def __init__(self, params, env):
@@ -64,166 +50,42 @@ class CMGroup(object):  # TODO: Add better description in docstring
 
         logger.info('Creating %s', self)
 
-        self._data_path = env.data_path
+        self._params = BASE_PARAMS
+        self._params.update(params)
+        self._data_path = env.data_path         # Needed?
         self._results_path = env.results_path
 
-        # Parameters will be stored here, including updates during runtime.
-        self._params_file = pjoin(self._data_path,
-                                  '{}_params.json'.format(self.cmg_id))
-
-        # Compounds list is stored in this JSONL file, one dict per line.
-        self._compounds_file = pjoin(self._data_path,
-                                     '{}_cpds.jsonl'.format(self.cmg_id))
-
-        self._params = self.get_params()
-        self._params.update(params)
-        self.save_params()
-
-        # Determine whether we are checking for new additions to the group.
-        try:
-            date_args = [int(x) for x in
-                         self.params['last_updated'].split('-')]
-            self._last_updated = date(*date_args)
-        except (AttributeError, KeyError, TypeError, ValueError):
-            logger.info('No date or invalid date format for %s: '
-                        'updates will retrieve all search results', self)
-            self._last_updated = None
-
-        self._listkey = None
-
-    # TODO: Update properties.
+    # TODO: Update properties. This should be based on what attributes are
+    # actually accessed in the rest of the code.
     @property
     def cmg_id(self):
-        """The numeric ID of the chemical/material group."""
+        """Unique identifier of the compound group."""
         return self._cmg_id
 
     @property
     def name(self):
-        if 'name' in self._params:
-            return self._params['name']
+        """Name of the compound group."""
+        return self._params['name']
 
     @property
-    def searchtype(self):
-        if 'searchtype' in self.params
-        return self._params['searchtype']
+    def method(self):
+        """Method used to identify compound group members."""
+        return self._params['method']
 
     @property
-    def structtype(self):
-        """
-        The form of structure notation used for searching, e.g. ``smiles``.
-        """
-        return self._params['structtype']
+    def structure_type(self):
+        """Type of structure notation for query: SMILES or SMARTS."""
+        return self._params['structure_type']
 
     @property
-    def searchstring(self):
-        """
-        Query for structure-based searches, e.g. a string in SMILES notation.
-        """
-        if 'searchstring' in self._params:
-            return self._params['searchstring']
+    def structure(self):
+        """String representation of molecular structure."""
+        return self._params['structure']
 
     @property
     def notes(self):
+        """Optional text describing the compound group."""
         return self._params['notes']
-
-    @property
-    def last_updated(self):
-        """
-        When the group was last updated, according to the supplied parameters.
-
-        This property is either a :class:`datetime.date` object or ``None``.
-        Note that :class:`datetime.date` can't be serialized to JSON or Excel
-        without first converting to string.
-        """
-        return self._last_updated
-
-    @property
-    def listkey(self):
-        return self._listkey
-
-    @listkey.setter
-    def listkey(self, new_listkey):
-        self._listkey = new_listkey
-
-    def save_params(self):
-        """
-        Write parameters to a JSON file in the project environment.
-
-        This allows some runtime-generated data (i.e., current update date)
-        to persist when resuming after a failure.
-        """
-        with open(self._params_file, 'w') as json_file:
-            logger.debug('Saving current parameters of %s to file', self)
-            json.dump(self.params, json_file)
-
-    def get_params(self):
-        """
-        Return saved parameters from a previous run, or default parameters.
-
-        Returns:
-            Parameters as container object, normally :class:`dict`.
-        """
-        try:
-            with open(self._params_file, 'r') as json_file:
-                logger.debug('Loading parameters from file for %s', self)
-                new_params = json.load(json_file)
-                return new_params
-        except (FileNotFoundError, json.JSONDecodeError):
-            logger.debug('No stored parameters found for %s', self)
-            return BASE_PARAMS
-
-    def get_compounds(self):
-        """
-        Read the compounds list that has been written to to file.
-
-        Returns:
-            list: All the compounds that have been added to the group during
-                the update process; each compound is a :class:`dict`.
-        """
-        try:
-            with open(self._compounds_file, 'r') as cpds_file:
-                lines = JSONLIterator(cpds_file)
-                new_compounds = list(islice(lines, None))
-                logger.debug('Loading %i compounds from JSON for %s',
-                             len(new_compounds), self)
-                return new_compounds
-        except (FileNotFoundError, ValueError, StopIteration):
-            logger.debug('No compounds in %s', self)
-            return []
-
-    def get_returned_cids(self):
-        """
-        Load the list of CIDs returned by the last PubChem search from file.
-        """
-        try:
-            with open(self._cids_file, 'r') as json_file:
-                cids = json.load(json_file)
-                logger.debug('Loading search results: %i CIDs for %s',
-                             len(cids), self)
-                return cids
-        except (FileNotFoundError, json.JSONDecodeError):
-            logger.debug('No existing CIDs found for %s', self)
-            return []
-
-    def save_returned_cids(self, cids):
-        """
-        Save the list of CIDs returned by the last PubChem search to file.
-        """
-        with open(self._cids_file, 'w') as json_file:
-            logger.debug('Saving search results for %s containing %i CIDs',
-                         self, len(cids))
-            json.dump(cids, json_file)
-
-    def clear_data(self):
-        """Delete data files generated from previous operations."""
-        logger.debug('Removing data for %s', self)
-        for file in (self._params_file,
-                     self._cids_file,
-                     self._compounds_file):
-            try:
-                os.remove(file)
-            except OSError:
-                logger.warning('Failed to delete %s', file)
 
     def __repr__(self):
         return 'CMGroup({0})'.format(self.cmg_id)
@@ -242,8 +104,8 @@ class CMGroup(object):  # TODO: Add better description in docstring
                                  index=[0]).set_index('cmg_id')
         params_frame.set_index('cmg_id', inplace=True)
 
-        compounds_frame = DataFrame(self.get_compounds(),
-                                    columns=EXPORT_COLS)
+        compounds_frame = DataFrame(self.get_compounds())   # TODO
+                                    # columns=BASE_PARAMS.keys())  # not this
         compounds_frame.CMG_ID = self.cmg_id
         compounds_frame.Action = 'add'
 
@@ -276,11 +138,11 @@ class CMGroup(object):  # TODO: Add better description in docstring
         Initiate an async PubChem structure-based search and save the ListKey.
         """
         try:
-            if self.searchtype == 'substructure':
+            if self.method == 'substructure':
                 logger.info('Initiating PubChem substructure search for %s',
                             self)
                 key = pc.init_substruct_search(self.searchstring,
-                                               method=self.structtype)
+                                               method=self.structure_type)
                 logger.debug('Setting ListKey for %s: %s', self, key)
                 self.listkey = key
                 # Track date of current update:
@@ -319,43 +181,6 @@ class CMGroup(object):  # TODO: Add better description in docstring
             self.listkey = None
         except WebServiceError:
             logger.exception('Failed to retrieve search results for %s', self)
-
-    def update_from_cids(self):
-        """
-        Retrieve information on a list of CIDs and add new ones to the CMG.
-        """
-        returned_cids = self.get_returned_cids()
-
-        if not returned_cids:
-            logger.warning('No CIDs to update %s', self)
-            return None
-
-        try:
-            with open(self._compounds_file, 'r') as cpds_file:
-                lines = JSONLIterator(cpds_file, reverse=True)
-                last_item = lines.next()
-            last_cid = last_item['CID']
-            new_index = returned_cids.index(last_cid) + 1
-            cids = returned_cids[new_index:]
-            logger.info('Resuming update of %s; last CID added: %s',
-                        self, last_cid)
-        except (FileNotFoundError, ValueError, StopIteration):
-            cids = returned_cids
-            logger.info('Starting update of %s from search results', self)
-
-        logger.info('Looking up information for %i CIDs', len(cids))
-        new = pc.gen_compounds(cids, self.last_updated)
-
-        while True:
-            new_compounds = list(islice(new, 5))
-            if new_compounds == []:
-                break
-            with open(self._compounds_file, 'a') as cpds_file:
-                for cpd in new_compounds:
-                    cpds_file.write(json.dumps(cpd) + '\n')
-            sleep(1)
-
-        logger.info('Completed PubChem update for %s', self)
 
     def pubchem_update(self, wait=10, **kwargs):
         """
@@ -416,7 +241,7 @@ def batch_cmg_search(groups, resume_update=False, wait=120, **kwargs):
 
 def params_from_json(params_file):
     """
-    Load a list of group parameters from a JSON file.
+    Load a list of :class:`CMGroup` parameters from a JSON file.
 
     Parameters:
         params_file (str): Path to a JSON file containing CMG parameters.

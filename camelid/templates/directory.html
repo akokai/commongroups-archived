@@ -3,7 +3,7 @@
   <head>
     <title>{title}</title>
     <style>
-      body {font-family: monospace;}
+      body {font-family: monospace; background-color: #f6f6f6;}
       td {padding: 8px; vertical-align: middle;}
     </style>
   </head>
@@ -12,13 +12,13 @@
     <table>
       <thead>
         <tr>
-          <td>materialid</td> <td>name</td> <td>notes</td>
+          <td>cmg_id</td> <td>name</td> <td>notes</td>
         </tr>
       </thead>
       <tbody>{#items}
         <tr>
-          <td>{materialid}</td>
-          <td><a href="{materialid}.html">{name}</a></td>
+          <td>{cmg_id}</td>
+          <td><a href="{cmg_id}.html">{name}</a></td>
           <td>{notes}</td>
         </tr>{/items}
       </tbody>
