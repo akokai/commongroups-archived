@@ -22,16 +22,18 @@ def pc_img(cid, size=500):
     return '<a href="{0}"><img src="{1}"></a>'.format(cid_url, img_url)
 
 
-def cids_to_html(cids, html_file, title='PubChem graphics', notes='', size=500):
+def cids_to_html(cids, path, title='PubChem images', description='', size=500):
     """
     Generate HTML file displaying PubChem structures for an iterable of CIDs.
     """
     context = {'title': title,
-               'notes': notes,
-               'items': [pc_img(cid, size=size) for cid in cids]}
+               'description': description,
+               'size': size,
+               'items': [{'cid': cid, 'image': pc_img(cid, size=size)}
+                         for cid in cids]}
     templater = AshesEnv([templates_dir])
     html = templater.render('query_cids.html', context)
-    with open(html_file, 'w') as file:
+    with open(path, 'w') as file:
         file.write(html)
 
 
@@ -52,7 +54,7 @@ def describe_cmg(cmg, env):
     return html
 
 
-def directory(cmgs, env, title='CMG Processing results'):
+def directory(cmgs, env, title='Compound group processing results'):
     """
     Generate HTML directory of results for multiple ``CMGroup``s.
     """
@@ -60,8 +62,8 @@ def directory(cmgs, env, title='CMG Processing results'):
                'items': [{'cmg_id': cmg.cmg_id,
                           'name': cmg.name,
                           'notes': cmg.notes} for cmg in cmgs]}
-    html_file = pjoin(env.results_path, 'index.html')
-    templater = AshesEnv(['templates'])
+    path = pjoin(env.results_path, 'index.html')
+    templater = AshesEnv([templates_dir])
     html = templater.render('directory.html', context)
-    with open(html_file, 'w') as file:
+    with open(path, 'w') as file:
         file.write(html)

@@ -10,10 +10,11 @@ from itertools import islice
 from datetime import date
 
 from pandas import DataFrame, ExcelWriter
-from boltons.jsonutils import JSONLIterator
+# from boltons.jsonutils import JSONLIterator
 
 from camelid import logconf  # pylint: disable=unused-import
 from camelid import pubchemutils as pc
+from camelid.hypertext import cids_to_html
 from camelid.errors import WebServiceError
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -25,16 +26,21 @@ BASE_PARAMS = {
     'structure_type': None,
     'structure': None,
     'function': None,
-    'notes': ''
+    'description': ''
 }
 
 
-class CMGroup(object):  # TODO: Add better description in docstring
+class CMGroup(object):
     """
-    Compound group class.
+    Compound group object.
 
-    Data, logs, and common parameters for each :class:`CMGroup` are managed by
-    an associated :class:`camelid.env.CamelidEnv` project environment.
+    Initialize with parameters that should be known in advance of any querying,
+    and are assumed to stay unchanged. Process using the ``_TODO_`` method(s)
+    and find a computed summary of results in the ``info`` attribute. Add your
+    own annotations using :func:`add_info`.
+
+    Output and logs for each :class:`CMGroup` are managed by an associated
+    :class:`camelid.env.CamelidEnv` project environment.
 
     Parameters:
         params (dict): A dictionary containing the parameters of the compound
@@ -43,24 +49,23 @@ class CMGroup(object):  # TODO: Add better description in docstring
     """
     def __init__(self, params, env):
         try:
-            self._cmg_id = params['cmg_id']
-        except KeyError:
+            assert 'cmg_id' in params
+        except (AssertionError, KeyError):
             logger.critical('Cannot initialize CMGroup without cmg_id')
             raise
-
-        logger.info('Creating %s', self)
-
         self._params = BASE_PARAMS
         self._params.update(params)
-        self._data_path = env.data_path         # Needed?
-        self._results_path = env.results_path
+        self.info = {'description': self._params['description']}
+        self.data_path = env.data_path         # Needed?
+        self.results_path = env.results_path
+        logger.info('Created %s', self)
 
-    # TODO: Update properties. This should be based on what attributes are
-    # actually accessed in the rest of the code.
+    # These descriptor attributes are partly for convenience, and partly to
+    # mark the intention of not modifying the params.
     @property
     def cmg_id(self):
         """Unique identifier of the compound group."""
-        return self._cmg_id
+        return self._params['cmg_id']
 
     @property
     def name(self):
@@ -79,21 +84,39 @@ class CMGroup(object):  # TODO: Add better description in docstring
 
     @property
     def structure(self):
-        """String representation of molecular structure."""
+        """String representation of molecular structural pattern."""
         return self._params['structure']
 
-    @property
-    def notes(self):
-        """Optional text describing the compound group."""
-        return self._params['notes']
+    def add_info(self, info):
+        """
+        Add information to the group as key-value pairs.
+
+        Parameters:
+            data (dict): A dict containing any number of items.
+        """
+        self.info.update(info)
 
     def __repr__(self):
-        return 'CMGroup({0})'.format(self.cmg_id)
+        return 'CMGroup({})'.format(self._params)
 
-    def to_html_by_cid(self, out_path=None):
-        # TODO
-        # see hypertext.cids_to_html
+    def __str__(self):
+        return 'CMGroup({})'.format(self.cmg_id)
+
+    def query_update(self, que, conn, count_fields):  # TODO
+        """
+        Do a query and update given fields...
+
+        Parameters:
+            fields: Iterable of SQLAlchemy selctable objects to select from.
+        """
         pass
+
+    # def cids_to_html(self, out_path=None):
+    #     if not out_path:
+    #         out_path = pjoin(self.results_path,
+    #                          '{}.html'.format(self.results_path))
+    #     cids_to_html(cids, out_path, self.name, self.info['description'])
+    #     pass
 
     def to_excel(self, out_path=None):  # TODO: Will need update.
         """
@@ -133,7 +156,7 @@ class CMGroup(object):  # TODO: Add better description in docstring
             params_frame.to_excel(writer, sheet_name='CMG Parameters')
             compounds_frame.to_excel(writer, sheet_name='Compounds')
 
-    def init_pubchem_search(self):
+    def init_pubchem_search(self):  # TODO: Delete
         """
         Initiate an async PubChem structure-based search and save the ListKey.
         """
@@ -158,7 +181,7 @@ class CMGroup(object):  # TODO: Add better description in docstring
             logger.exception('Missing parameters')
             raise
 
-    def retrieve_pubchem_search(self, **kwargs):
+    def retrieve_pubchem_search(self, **kwargs):  # TODO: Delete
         """
         Retrieve results from a previously-initiated async PubChem search.
         """
@@ -182,7 +205,7 @@ class CMGroup(object):  # TODO: Add better description in docstring
         except WebServiceError:
             logger.exception('Failed to retrieve search results for %s', self)
 
-    def pubchem_update(self, wait=10, **kwargs):
+    def pubchem_update(self, wait=10, **kwargs):  # TODO: Delete
         """
         Perform a PubChem search to update the CMG, and output to Excel.
 

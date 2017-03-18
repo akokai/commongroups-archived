@@ -124,11 +124,6 @@ class CamelidEnv(object):
             lgr = logging.getLogger(item)
             lgr.addHandler(proj_handler)
 
-    def clear_logs(self):
-        """Delete all log files belonging to the project."""
-        for item in iglob(pjoin(self.log_path, '*.log')):
-            os.remove(item)
-
     def run(self, args):  # TODO: Update!
         """
         Perform operations specified by the arguments.

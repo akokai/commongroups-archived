@@ -3,23 +3,45 @@
   <head>
     <title>{title}</title>
     <style>
-      body {font-family: monospace; background-color: #f6f6f6;}
-      .hdr {position: fixed; top: 8px; left: 8px;}
-      table {width: 100%;}
-      td {text-align: center; padding: 8px;}
+      body {font-family: monospace;}
+      table {
+        margin: auto;
+        width: {size}px;
+      }
+      td {
+        padding-top: 24px;
+        padding-bottom: 8px;
+      }
+      .header {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+      }
+      .cell {position: relative;}
+      .cid {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        padding: 24px;
+      }
     </style>
   </head>
   <body>
-    <div class='hdr'>
-      <h1>{title}</h1>
-      <p>{notes}</p>
-    </div>
     <table>
-      <tbody>{#items} 
+      <tbody>{#items}
         <tr>
-          <td>{.|s}</td>
+          <td>
+            <div class="cell">
+              {image|s}
+              <div class='cid'>{cid}</div>
+            </div>
+          </td>
         </tr>{/items}
       </tbody>
     </table>
+    <div class='header'>
+      <h1>{title}</h1>
+      <p>{notes}</p>
+    </div>
   </body>
 </html>
