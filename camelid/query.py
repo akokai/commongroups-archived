@@ -25,6 +25,9 @@ def substructure_query(pattern, mol, fields):
         pattern: Substructure query molecule as SMARTS string.
         mol: SQLAlchemy object representing a column of searchable molecules.
         fields (iterable): SQLAlchemy selctable objects to select from.
+
+    Returns:
+        SQLAlchemy :class:`Select` object.
     """
     where_clause = mol.op('@>')(text(':q ::qmol').bindparams(q=str(pattern)))
     que = select(fields).where(where_clause)
@@ -40,6 +43,9 @@ def substruct_exclude_query(pattern, exclude_pattern, mol, fields):
         exclude_pattern (str): Substructure to exclude, as SMARTS string.
         mol: SQLAlchemy object representing a column of searchable molecules.
         fields (iterable): SQLAlchemy selctable objects to select from.
+
+    Returns:
+        SQLAlchemy :class:`Select` object.
     """
     sub_clause = mol.op('@>')(text(':p ::qmol').bindparams(p=pattern))
     not_clause = mol.op('@>')(text(':x ::qmol').bindparams(x=exclude_pattern))
@@ -49,6 +55,16 @@ def substruct_exclude_query(pattern, exclude_pattern, mol, fields):
 
 
 def get_query_results(que, con):
+    """
+    Execute a database query using SQLAlchemy.
+
+    Parameters:
+        que: SQLAlchemy :class:`Select` object.
+        con: SQLAlchemy database :class:`Connection` object.
+
+    Returns:
+        A pandas :class:`DataFrame` containing all rows of results.
+    """
     res = con.execute(que)
     logger.info('%i results', res.rowcount)
     ret = DataFrame(res.fetchall(), columns=res.keys())

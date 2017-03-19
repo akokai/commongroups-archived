@@ -122,11 +122,11 @@ class CMGroup(object):
         ret = {'params': self._params, 'info': self.info}
         return ret
 
-    def to_json(self, json_path=None):
+    def to_json(self, path=None):
         """Serialize CMGroup parameters and info as JSON."""
-        if not json_path:
-            json_path = pjoin(self.results_path, '{}.json'.format(self.cmg_id))
-        with open(json_path, 'w') as file:
+        if not path:
+            path = pjoin(self.data_path, '{}.json'.format(self.cmg_id))
+        with open(path, 'w') as file:
             json.dump(self.to_dict(), file)
 
     def compounds_to_pkl(self, pkl_path=None):
@@ -226,42 +226,29 @@ class CMGroup(object):
 #     logger.info('Completed all group updates!')
 
 
-def cmgs_to_json(cmgs, json_path):
-    """
-    Write information about a number of :class:`CMGroup`s to JSON.
-
-    Parameters:
-        cmgs (iterable): The compound group objects to write to JSON.
-        json_path (str): Path for JSON file to be written.
-    """
-    cmg_data = [cmg.to_dict() for cmg in cmgs]
-    with open(json_path, 'w') as json_file:
-        json.dump(cmg_data, json_file)
-
-
 # TODO: Update for added info dict.
-def params_from_json(json_path):
+def params_from_json(path):
     """
     Load a list of :class:`CMGroup` parameters from a JSON file.
 
     Parameters:
-        json_path (str): Path to a JSON file containing CMG parameters.
+        path (str): Path to a JSON file containing CMG parameters.
 
     Returns:
         A container, usually a list of dicts.
     """
-    with open(json_path, 'r') as json_file:
-        params_list = json.load(json_file)
+    with open(path, 'r') as file:
+        params_list = json.load(file)
     return params_list
 
 
 # TODO: Update for added info dict.
-def cmgs_from_json(json_path, env):
+def cmgs_from_json(path, env):
     """
     Generate :class:`CMGroup` objects from a JSON file.
 
     Parameters:
-        json_path (str): Path to a JSON file containing parameters for any
+        path (str): Path to a JSON file containing parameters for any
             number of CMGs.
         env (:class:`camelid.env.CamelidEnv`): The project environment. This
             determines the environment used for the :class:`CMGroup` objects.
@@ -269,6 +256,20 @@ def cmgs_from_json(json_path, env):
     Yields:
         :class:`CMGroup`: Chemical/material group objects.
     """
-    logger.debug('Reading group parameters from %s', json_path)
-    for params in params_from_json(json_path):
+    logger.debug('Reading group parameters from %s', path)
+    for params in params_from_json(path):
         yield CMGroup(params, env)
+
+
+def collect_to_json(cmgs, path):
+    """
+    Write information about a number of :class:`CMGroup`s to JSON.
+
+    Parameters:
+        cmgs (iterable): The compound group objects to write to JSON.
+        path (str): Path for JSON file to be written.
+    """
+    cmg_data = [cmg.to_dict() for cmg in cmgs]
+    with open(path, 'w') as file:
+        json.dump(cmg_data, file)
+
