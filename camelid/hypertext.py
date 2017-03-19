@@ -22,13 +22,18 @@ def pc_img(cid, size=500):
     return '<a href="{0}"><img src="{1}"></a>'.format(cid_url, img_url)
 
 
-def cids_to_html(cids, path, title='PubChem images', description='', size=500):
+def cids_to_html(cids, path, title='PubChem images', info=None, size=500):
     """
     Generate HTML file displaying PubChem structures for an iterable of CIDs.
     """
-    context = {'title': title,
-               'description': description,
-               'size': size,
+    info = info or dict()
+    # The reverse sort is a hack to make SQL text appear first.
+    # TODO: Something more sensible.
+    info_list = [{'key': k, 'value': v} for k, v
+                 in sorted(info.items(), reverse=True) if v is not None]
+    context = {'size': size,
+               'title': title,
+               'info': info_list,
                'items': [{'cid': cid, 'image': pc_img(cid, size=size)}
                          for cid in cids]}
     templater = AshesEnv([templates_dir])
@@ -37,7 +42,7 @@ def cids_to_html(cids, path, title='PubChem images', description='', size=500):
         file.write(html)
 
 
-def results_to_html(cmg, env):
+def results_to_html(cmg):
     """
     Generate an HTML document showing results of processing a ``CMGroup``.
     """
@@ -45,7 +50,7 @@ def results_to_html(cmg, env):
     pass
 
 
-def describe_cmg(cmg, env):
+def describe_cmg(cmg):
     """
     Generate an HTML snippet describing the parameters of a ``CMGroup``.
     """
@@ -58,10 +63,11 @@ def directory(cmgs, env, title='Compound group processing results'):
     """
     Generate HTML directory of results for multiple ``CMGroup``s.
     """
-    context = {'title': title,
-               'items': [{'cmg_id': cmg.cmg_id,
-                          'name': cmg.name,
-                          'notes': cmg.notes} for cmg in cmgs]}
+    context = {
+        'title': title,
+        'items': [{'cmg_id': cmg.cmg_id,
+                   'name': cmg.name,
+                   'description': cmg.info['description']} for cmg in cmgs]}
     path = pjoin(env.results_path, 'index.html')
     templater = AshesEnv([templates_dir])
     html = templater.render('directory.html', context)

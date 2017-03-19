@@ -3,8 +3,7 @@
   <head>
     <title>{title}</title>
     <style>
-      body {font-family: monospace; background-color: #f6f6f6;}
-      td {padding: 8px; vertical-align: middle;}
+      {>camelid.css/}
     </style>
   </head>
   <body>
@@ -12,14 +11,14 @@
     <table>
       <thead>
         <tr>
-          <td>cmg_id</td> <td>name</td> <td>notes</td>
+          <th>cmg_id</th> <th>name</th> <th>description</th>
         </tr>
       </thead>
       <tbody>{#items}
         <tr>
-          <td>{cmg_id}</td>
+          <td><b><a href="{cmg_id}.html">{cmg_id}</a></b></td>
           <td><a href="{cmg_id}.html">{name}</a></td>
-          <td>{notes}</td>
+          <td>{description}</td>
         </tr>{/items}
       </tbody>
     </table>

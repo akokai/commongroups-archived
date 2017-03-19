@@ -3,37 +3,17 @@
   <head>
     <title>{title}</title>
     <style>
-      body {font-family: monospace;}
-      table {
-        margin: auto;
-        width: {size}px;
-      }
-      td {
-        padding-top: 24px;
-        padding-bottom: 8px;
-      }
-      .header {
-        position: fixed;
-        top: 8px;
-        left: 8px;
-      }
-      .cell {position: relative;}
-      .cid {
-        position: absolute;
-        bottom: 8px;
-        right: 8px;
-        padding: 24px;
-      }
+      {>camelid.css/}
     </style>
   </head>
   <body>
-    <table>
+    <table class="mol">
       <tbody>{#items}
         <tr>
-          <td>
-            <div class="cell">
+          <td class="mol">
+            <div class="mol_img">
               {image|s}
-              <div class='cid'>{cid}</div>
+              <div class="cid">{cid}</div>
             </div>
           </td>
         </tr>{/items}
@@ -41,7 +21,18 @@
     </table>
     <div class='header'>
       <h1>{title}</h1>
-      <p>{notes}</p>
+      {?info}
+        <table class="info">
+          <tbody>{#info}
+            <tr>
+              <td class="info"><b>{key}</b></td> <td class="info">{value}</td>
+            </tr>{/info}
+          </tbody>
+        </table>
+      {:else}
+      <small><i>No description</i></small>
+      {/info}
+      <p><a href="index.html">&lt; back</a></p>
     </div>
   </body>
 </html>

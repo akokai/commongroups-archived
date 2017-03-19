@@ -24,7 +24,7 @@ def substructure_query(pattern, mol, fields):
     Parameters:
         pattern: Substructure query molecule as SMARTS string.
         mol: SQLAlchemy object representing a column of searchable molecules.
-        fields: Iterable of SQLAlchemy selctable objects to select from.
+        fields (iterable): SQLAlchemy selctable objects to select from.
     """
     where_clause = mol.op('@>')(text(':q ::qmol').bindparams(q=str(pattern)))
     que = select(fields).where(where_clause)
@@ -36,10 +36,10 @@ def substruct_exclude_query(pattern, exclude_pattern, mol, fields):
     Construct a query matching one substructure and excluding another.
 
     Parameters:
-        pattern: Substructure to match, as SMARTS string.
-        exclude_pattern: Substructure to exclude, as SMARTS string.
+        pattern (str): Substructure to match, as SMARTS string.
+        exclude_pattern (str): Substructure to exclude, as SMARTS string.
         mol: SQLAlchemy object representing a column of searchable molecules.
-        fields: Iterable of SQLAlchemy selctable objects to select from.
+        fields (iterable): SQLAlchemy selctable objects to select from.
     """
     sub_clause = mol.op('@>')(text(':p ::qmol').bindparams(p=pattern))
     not_clause = mol.op('@>')(text(':x ::qmol').bindparams(x=exclude_pattern))
@@ -48,8 +48,8 @@ def substruct_exclude_query(pattern, exclude_pattern, mol, fields):
     return que
 
 
-def get_query_results(que, conn):
-    res = conn.execute(que)
+def get_query_results(que, con):
+    res = con.execute(que)
     logger.info('%i results', res.rowcount)
-    ret = DataFrame(res.fetchall(), columns=res.keys)
+    ret = DataFrame(res.fetchall(), columns=res.keys())
     return ret
