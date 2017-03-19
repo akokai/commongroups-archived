@@ -13,9 +13,9 @@ from itertools import islice
 
 from boltons.fileutils import mkdir_p
 
-from . import logconf
-from . import cmgroup as cmg
-from . import googlesheet as gs
+from camelid import logconf
+from camelid import cmgroup as cmg
+from camelid import googlesheet as gs
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +44,9 @@ class CamelidEnv(object):
             database.
     """
     def __init__(self,
-                 env_path=None,
                  project='default',
-                 database=None):
+                 database=None,
+                 env_path=None):
         if env_path:
             self._env_path = os.path.abspath(env_path)
         elif os.getenv('CAMELID_HOME'):
@@ -55,6 +55,10 @@ class CamelidEnv(object):
             self._env_path = pjoin(os.path.expanduser('~'), 'camelid_data')
 
         self._name = project
+        self._database = database
+        if not database:
+            logger.warning('No database URL given: %s', self)
+
         self._project_path = pjoin(self._env_path, project)
         mkdir_p(self._project_path)
 
@@ -66,16 +70,11 @@ class CamelidEnv(object):
         self.add_project_handler()
         logger.info('Project path: %s', self._project_path)
 
-        if database is None:
-            logger.warning('No database URL given: %s', self)
-        self._database = database
-
         # Set up data and results directories.
         self._data_path = pjoin(self._project_path, 'data')
         mkdir_p(self._data_path)
         self._results_path = pjoin(self._project_path, 'results')
         mkdir_p(self._results_path)
-
 
     @property
     def project_path(self):
@@ -106,8 +105,8 @@ class CamelidEnv(object):
         return self._database
 
     def __repr__(self):
-        params = ', '.join(self._env_path, self._name, self.database)
-        return 'CamelidEnv({})'.format(params)
+        args = [repr(self._env_path), repr(self._name), repr(self._database)]
+        return 'CamelidEnv({})'.format(', '.join(args))
 
     def add_project_handler(self):
         """
@@ -124,11 +123,6 @@ class CamelidEnv(object):
         for item in loggers:
             lgr = logging.getLogger(item)
             lgr.addHandler(proj_handler)
-
-    def clear_logs(self):
-        """Delete all log files belonging to the project."""
-        for item in iglob(pjoin(self.log_path, '*.log')):
-            os.remove(item)
 
     def run(self, args):  # TODO: Update!
         """

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <style>
+      {>camelid.css/}
+    </style>
+  </head>
+  <body>
+    <h1>{title}</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>cmg_id</th> <th>name</th> <th>description</th>
+        </tr>
+      </thead>
+      <tbody>{#items}
+        <tr>
+          <td><b><a href="{cmg_id}.html">{cmg_id}</a></b></td>
+          <td><a href="{cmg_id}.html">{name}</a></td>
+          <td>{description}</td>
+        </tr>{/items}
+      </tbody>
+    </table>
+  </body>
+</html>

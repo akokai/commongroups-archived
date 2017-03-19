@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{title}</title>
+    <style>
+      {>camelid.css/}
+    </style>
+  </head>
+  <body>
+    <table class="mol">
+      <tbody>{#items}
+        <tr>
+          <td class="mol">
+            <div class="mol_img">
+              {image|s}
+              <div class="cid">{cid}</div>
+            </div>
+          </td>
+        </tr>{/items}
+      </tbody>
+    </table>
+    <div class='header'>
+      <h1>{title}</h1>
+      {?info}
+        <table class="info">
+          <tbody>{#info}
+            <tr>
+              <td class="info"><b>{key}</b></td> <td class="info">{value}</td>
+            </tr>{/info}
+          </tbody>
+        </table>
+      {:else}
+      <small><i>No description</i></small>
+      {/info}
+      <p><a href="index.html">&#x25c2; back</a></p>
+    </div>
+  </body>
+</html>

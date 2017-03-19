@@ -1,0 +1,54 @@
+body {
+  margin: 8px;
+  font-family: sans-serif;
+  background-color: rgb(251, 251, 251);
+  color: rgb(55, 57, 64);
+}
+h1 {
+  color: rgb(125, 128, 132);
+}
+a {
+  color: rgb(0, 128, 72);
+  text-decoration: none;
+}
+a:active {
+  color: rgb(34, 175, 113);
+}
+a:hover, a:active {
+  background-color: rgb(239, 251, 245);   /* textual link highlights */
+}
+table {font-family: monospace;}
+td, th {
+  padding: 8px;
+  vertical-align: middle;
+}
+td.info {
+  padding: 8px;
+  vertical-align: top;
+}
+table.mol {
+  position: absolute;
+  right: 0px;
+  width: 66%;
+}
+td.mol {
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+.mol_img {
+  margin-left: 16px;
+  position: relative;
+  width: {size}px;
+}
+.cid {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  padding: 24px;
+}
+div.header {
+  position: fixed;
+  top: 0px;
+  left: 8px;
+  width: 33%;
+}
