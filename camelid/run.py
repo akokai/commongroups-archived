@@ -16,8 +16,8 @@ from __future__ import unicode_literals
 import logging
 import argparse
 
-from . import logconf
-from .env import CamelidEnv
+from camelid import logconf
+from camelid.env import CamelidEnv
 
 logger = logging.getLogger('camelid')
 

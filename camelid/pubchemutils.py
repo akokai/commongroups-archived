@@ -23,9 +23,9 @@ from boltons.iterutils import remap
 import requests
 import pubchempy as pcp
 
-from . import logconf
-from . import casrnutils
-from .errors import WebServiceError
+from camelid import logconf
+from camelid import casrnutils
+from camelid.errors import WebServiceError
 
 logger = logging.getLogger(__name__)
 

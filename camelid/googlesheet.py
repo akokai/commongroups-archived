@@ -17,18 +17,16 @@ from itertools import islice
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials as SAC
 
-from . import logconf
-from .cmgroup import CMGroup
-from .errors import NoCredentialsError
+from camelid import logconf
+from camelid.cmgroup import CMGroup, BASE_PARAMS
+from camelid.errors import NoCredentialsError
 
 logger = logging.getLogger(__name__)
 
 SCOPE = ['https://spreadsheets.google.com/feeds']
 
 TITLE = 'CMG parameters'        # TODO: Make user-specified; assume private.
-DEFAULT_WORKSHEET = 'new CMGs'  # TODO: These details are specific to org.
-PARAMS_COLS = ['materialid', 'name', 'searchtype',
-               'structtype', 'searchstring', 'last_updated']
+DEFAULT_WORKSHEET = 'active'    # TODO: These details are specific to org.
 
 
 class SheetManager(object):
@@ -98,7 +96,7 @@ class SheetManager(object):
         for i in range(2, wks.row_count + 1):
             if wks.cell(i, 1).value in [None, '']:
                 raise StopIteration
-            params = {k: v for (k, v) in zip(PARAMS_COLS, wks.row_values(i))}
+            params = {k: v for (k, v) in zip(BASE_PARAMS, wks.row_values(i))}
             yield params
 
     def get_cmgs(self, env):
