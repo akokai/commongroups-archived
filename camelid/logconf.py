@@ -35,6 +35,11 @@ CONFIG = {
             'level': 'DEBUG',
             'handlers': ['console'],
             'propagate': False
+        },
+        'sqlalchemy': {
+            'level': 'WARNING',
+            'handlers': ['console'],
+            'propagate': False
         }
     },
     'root': {

@@ -20,15 +20,15 @@ from camelid.errors import WebServiceError
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
-BASE_PARAMS = {
-    'cmg_id': None,
-    'name': 'no name',
-    'method': None,
-    'structure_type': None,
-    'structure': None,
-    'function': None,
-}
-
+BASE_PARAMS = [
+    'cmg_id',
+    'name',
+    'method',
+    'structure_type',
+    'structure',
+    'function'
+]
+BASE_PARAMS_VALUES = [None, 'no name', None, None, None, None]
 
 class CMGroup(object):
     """
@@ -41,27 +41,23 @@ class CMGroup(object):
 
     Data, output, and logs for each :class:`CMGroup` are managed using an
     associated :class:`camelid.env.CamelidEnv` project environment. See
-    :doc:`design`.
+    :ref:`Design <design>`.
 
     Parameters:
-        params (dict): A dictionary containing the parameters of the compound
-            group. See :doc:`params`.
         env (:class:`camelid.env.CamelidEnv`): The project environment to use.
-        description (str): Optional textual description of the compound group.
-        info (dict): Optional extra information as key-value pairs. This is
-            for loading CMGroup objects from JSON.
+        params (dict): A dictionary containing the parameters of the compound
+            group. See :ref:`Parameters <params>`.
+        info (dict): Optional extra information as key-value pairs.
     """
-    def __init__(self, params, env, description='', info=None):
+    def __init__(self, env, params, info=None):
         try:
             assert 'cmg_id' in params
         except (AssertionError, KeyError):
             logger.critical('Cannot initialize CMGroup without cmg_id')
             raise
-        self._params = BASE_PARAMS.copy()
+        self._params = dict(zip(BASE_PARAMS, BASE_PARAMS_VALUES))
         self._params.update(params)
-        self.info = info or {'description': ''}
-        if description:
-            self.info.update({'description': description})
+        self.info = info or dict()
         self.data_path = env.data_path
         self.results_path = env.results_path
         self._compounds = None
@@ -127,7 +123,7 @@ class CMGroup(object):
         if not path:
             path = pjoin(self.data_path, '{}.json'.format(self.cmg_id))
         with open(path, 'w') as file:
-            json.dump(self.to_dict(), file)
+            json.dump(self.to_dict(), file, indent=2, sort_keys=True)
 
     def compounds_to_pkl(self, pkl_path=None):
         """Serialize DataFrame of compounds to a binary file."""
@@ -243,33 +239,38 @@ def params_from_json(path):
 
 
 # TODO: Update for added info dict.
-def cmgs_from_json(path, env):
+def cmgs_from_json(env, path):
     """
     Generate :class:`CMGroup` objects from a JSON file.
 
     Parameters:
-        path (str): Path to a JSON file containing parameters for any
-            number of CMGs.
         env (:class:`camelid.env.CamelidEnv`): The project environment. This
             determines the environment used for the :class:`CMGroup` objects.
+        path (str): Path to a JSON file containing parameters, and optionally
+            other ``info``, for a number of CMGs.
 
     Yields:
         :class:`CMGroup`: Chemical/material group objects.
     """
     logger.debug('Reading group parameters from %s', path)
-    for params in params_from_json(path):
-        yield CMGroup(params, env)
+    for item in params_from_json(path):
+        if 'info' in item:
+            yield CMGroup(env, item['params'], item['info'])
+        else:
+            yield CMGroup(env, item['params'])
 
 
-def collect_to_json(cmgs, path):
+def collect_to_json(cmgs, env, filename=None):
     """
-    Write information about a number of :class:`CMGroup`s to JSON.
+    Write parameters and info for a number of CMGroups to a single JSON file.
 
     Parameters:
         cmgs (iterable): The compound group objects to write to JSON.
-        path (str): Path for JSON file to be written.
+        env (:class:`camelid.env.CamelidEnv`): Project environment.
+        filename (str): Optional alternative filename.
     """
+    filename = filename or 'cmgroups.json'
+    path = pjoin(env.results_path, filename)
     cmg_data = [cmg.to_dict() for cmg in cmgs]
     with open(path, 'w') as file:
-        json.dump(cmg_data, file)
-
+        json.dump(cmg_data, file, indent=2, sort_keys=True)

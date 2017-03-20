@@ -1,23 +1,21 @@
 # coding: utf-8
 
-"""Automatically populate and update chemical & material groups."""
+"""Environment for compound group operations."""
 
-from __future__ import unicode_literals
-
-import os
-import logging
-from os.path import join as pjoin
 from datetime import datetime
-from glob import iglob
 from itertools import islice
+import json
+import logging
+import os
+from os.path import join as pjoin
 
 from boltons.fileutils import mkdir_p
 
-from camelid import logconf
+from camelid import logconf  # pylint: disable=unused-import
 from camelid import cmgroup as cmg
 from camelid import googlesheet as gs
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class CamelidEnv(object):
@@ -36,16 +34,15 @@ class CamelidEnv(object):
     with the same project name is created.
 
     Parameters:
+        name (str): Project name, used to name the project directory.
+        database (str): Database URL for connecting to structure-searchable
+            database.
         env_path (str): Path to root camelid home. If not specified,
             looks for environment variable ``CAMELID_HOME`` or defaults to
             ``~/camelid_data``.
-        project (str): Project name. Used to name the project directory.
-        database (str): Database URL for connecting to structure-searchable
-            database.
     """
     def __init__(self,
-                 project='default',
-                 database=None,
+                 name='default',
                  env_path=None):
         if env_path:
             self._env_path = os.path.abspath(env_path)
@@ -54,12 +51,8 @@ class CamelidEnv(object):
         else:
             self._env_path = pjoin(os.path.expanduser('~'), 'camelid_data')
 
-        self._name = project
-        self._database = database
-        if not database:
-            logger.warning('No database URL given: %s', self)
-
-        self._project_path = pjoin(self._env_path, project)
+        self._name = name
+        self._project_path = pjoin(self._env_path, name)
         mkdir_p(self._project_path)
 
         # Set up per-project logging to file.
@@ -75,6 +68,11 @@ class CamelidEnv(object):
         mkdir_p(self._data_path)
         self._results_path = pjoin(self._project_path, 'results')
         mkdir_p(self._results_path)
+
+    @property
+    def name(self):
+        """Project name."""
+        return self._name
 
     @property
     def project_path(self):
@@ -98,15 +96,15 @@ class CamelidEnv(object):
 
     @property
     def results_path(self):
+        """Path to the project results directory."""
         return self._results_path
 
-    @property
-    def database(self):
-        return self._database
-
     def __repr__(self):
-        args = [repr(self._env_path), repr(self._name), repr(self._database)]
+        args = [self._name, self._database, self._env_path]
         return 'CamelidEnv({})'.format(', '.join(args))
+
+    def __str__(self):
+        return 'CamelidEnv({})'.format(self._name)
 
     def add_project_handler(self):
         """
@@ -117,12 +115,30 @@ class CamelidEnv(object):
         """
         loggers = list(logconf.CONFIG['loggers'].keys())
         proj_handler = logging.FileHandler(self._log_file, mode='w')
-        fmt = logging.getLogger(loggers[0]).handlers[0].formatter
+        fmt = logging.getLogger('camelid').handlers[0].formatter
         proj_handler.setFormatter(fmt)
-
         for item in loggers:
             lgr = logging.getLogger(item)
             lgr.addHandler(proj_handler)
+
+    def read_config(self, config_path=None):
+        """
+        Load, and return, user-configured operating parameters.
+
+        Parameters:
+            config_path: Optional; path to an alternative JSON file.
+        """
+        if config_path:
+            in_proj = pjoin(self._env_path, config_path)
+            if os.path.exists(in_proj):
+                config_path = in_proj
+            else:
+                config_path = os.path.abspath(config_path)
+        else:
+            config_path = pjoin(self._env_path, 'config.json')
+        with open(config_path, 'r') as config_file:
+            config = json.load(config_file)
+        return config
 
     def run(self, args):  # TODO: Update!
         """
@@ -147,11 +163,11 @@ class CamelidEnv(object):
 
         groups = list(islice(cmg_gen, None))
 
-        if args.clean_start:
-            logger.debug('Clearing data and logs')
-            for group in groups:
-                group.clear_data()
-            self.clear_logs()
+        # if args.clean_start:
+        #     logger.debug('Clearing data and logs')
+        #     for group in groups:
+        #         group.clear_data()
+        #     self.clear_logs()
 
         logger.info('Starting batch CMG update process')
         try:

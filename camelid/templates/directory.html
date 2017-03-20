@@ -11,16 +11,25 @@
     <table>
       <thead>
         <tr>
-          <th>cmg_id</th> <th>name</th> <th>description</th>
+          <th>cmg_id</th> <th>name</th> <th>notes</th>
         </tr>
       </thead>
       <tbody>{#items}
         <tr>
           <td><b><a href="{cmg_id}.html">{cmg_id}</a></b></td>
           <td><a href="{cmg_id}.html">{name}</a></td>
-          <td>{description}</td>
+          <td>{notes}</td>
         </tr>{/items}
       </tbody>
     </table>
+    {?formats}
+    <br>
+    <h4>Other formats</h4>
+    <ul>{#formats}
+      <li><a href="cmgroups.{.}">{.}</a></li>
+      {/formats}
+    </ul>
+    {:else}
+    {/formats}
   </body>
 </html>
