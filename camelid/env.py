@@ -30,29 +30,29 @@ class CamelidEnv(object):
     Namely, a project directory corresponding to ``project_path`` and its
     subdirectories ``results_path``, ``log_path``, ``data_path``. The
     project directory is created within the "home" directory corresponding
-    to ``envs_path``. A new log file is created each time a new ``CamelidEnv``
+    to ``env_path``. A new log file is created each time a new ``CamelidEnv``
     with the same project name is created.
 
     Parameters:
         name (str): Project name, used to name the project directory.
         database (str): Database URL for connecting to structure-searchable
             database.
-        envs_path (str): Path to root camelid home. If not specified,
+        env_path (str): Path to root camelid home. If not specified,
             looks for environment variable ``CAMELID_HOME`` or defaults to
             ``~/camelid_data``.
     """
     def __init__(self,
                  name='default',
-                 envs_path=None):
-        if envs_path:
-            self._envs_path = os.path.abspath(envs_path)
+                 env_path=None):
+        if env_path:
+            self._env_path = os.path.abspath(env_path)
         elif os.getenv('CAMELID_HOME'):
-            self._envs_path = os.path.abspath(os.getenv('CAMELID_HOME'))
+            self._env_path = os.path.abspath(os.getenv('CAMELID_HOME'))
         else:
-            self._envs_path = pjoin(os.path.expanduser('~'), 'camelid_data')
+            self._env_path = pjoin(os.path.expanduser('~'), 'camelid_data')
 
         self._name = name
-        self._project_path = pjoin(self._envs_path, name)
+        self._project_path = pjoin(self._env_path, name)
         mkdir_p(self._project_path)
 
         # Set up per-project logging to file.
@@ -100,7 +100,7 @@ class CamelidEnv(object):
         return self._results_path
 
     def __repr__(self):
-        args = [self._name, self._database, self._envs_path]
+        args = [self._name, self._database, self._env_path]
         return 'CamelidEnv({})'.format(', '.join(args))
 
     def __str__(self):
@@ -128,7 +128,14 @@ class CamelidEnv(object):
         Parameters:
             config_path: Optional; path to an alternative JSON file.
         """
-        config_path = config_path or pjoin(self.project_path, 'config.json')
+        if config_path:
+            in_proj = pjoin(self._env_path, config_path)
+            if os.path.exists(in_proj):
+                config_path = in_proj
+            else:
+                config_path = os.path.abspath(config_path)
+        else:
+            config_path = pjoin(self._env_path, 'config.json')
         with open(config_path, 'r') as config_file:
             config = json.load(config_file)
         return config

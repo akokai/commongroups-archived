@@ -53,9 +53,9 @@ class SheetManager(object):
 
         logger.debug('Authorizing Google Service Account credentials')
         self._google = gspread.authorize(creds)
-        self._title = title
-        self._spreadsheet = None
-        self._worksheet = worksheet
+        self.title = title
+        self.spreadsheet = None
+        self.worksheet = worksheet
 
     def get_spreadsheet(self):
         """
@@ -64,27 +64,33 @@ class SheetManager(object):
         Returns:
             :mod:`gspread.Spreadsheet`: The Google Sheet object.
         """
-        if not self._spreadsheet:
-            logger.debug('Opening Google Sheet by title: %s', self._title)
-            self._spreadsheet = self._google.open(self._title)
-        return self._spreadsheet
+        if not self.spreadsheet:
+            logger.debug('Opening Google Sheet by title: %s', self.title)
+            self.spreadsheet = self._google.open(self.title)
+        return self.spreadsheet
 
     def get_params(self):
         """
-        Generate dicts of parameters from spreadsheet rows.
+        Read parameters and info from spreadsheet rows iteratively.
+
+        Stops reading the spreadsheet when a blank row is encountered.
 
         Yields:
-            dict: Parameters of each CMG; one per spreadsheet row.
+            Parameters and info from each row, as a nested dict.
         """
         doc = self.get_spreadsheet()
-        logger.debug('Getting worksheet by title: %s', self._worksheet)
-        wks = doc.worksheet(self._worksheet)
+        logger.debug('Getting worksheet by title: %s', self.worksheet)
+        wks = doc.worksheet(self.worksheet)
+        npars = len(BASE_PARAMS)
+        ikeys = wks.row_values(1)[npars:]
 
         for i in range(2, wks.row_count + 1):
-            if wks.cell(i, 1).value in [None, '']:
+            if not any(wks.row_values(i)):
                 raise StopIteration
-            params = {k: v for (k, v) in zip(BASE_PARAMS, wks.row_values(i))}
-            yield params
+            vals = wks.row_values(i)
+            params = {k: v for (k, v) in zip(BASE_PARAMS, vals[:npars])}
+            info = {k: v for (k, v) in zip(ikeys, vals[npars:])}
+            yield {'params': params, 'info': info}
 
     def get_cmgs(self, env):
         """
@@ -98,31 +104,21 @@ class SheetManager(object):
             :class:`camelid.cmgroup.CMGroup`: Based on parameters in each row.
 
         """
-        logger.debug('Generating CMGs from worksheet: %s', self._worksheet)
+        logger.debug('Generating CMGs from worksheet: %s', self.worksheet)
 
-        for params in self.get_params():
-            yield CMGroup(params, env)
+        for item in self.get_params():
+            yield CMGroup(env, item['params'], item['info'])
 
-    def params_to_json(self, file=None):
+    def params_to_json(self, path):
         """
         Get group parameters from the worksheet and output to a JSON file.
 
-        This could be useful for documentation purposes, but is not needed for
-        keeping records of search parameters. Each CMG automatically saves its
-        parameters to a JSON file in the ``data`` directory of the project.
-
         Parameters:
-            file (str): Path to output file.
-
-        Raises:
-            TypeError: If the output file path is not specified.
+            path (str): Path to output file.
         """
-        if file is None:
-            raise TypeError('No output file specified')
-
         group_params = list(islice(self.get_params(), None))
 
-        file_path = os.path.abspath(file)
+        file_path = os.path.abspath(path)
         logger.debug('Writing parameters to file: %s', file_path)
-        with open(file_path, 'w') as params_file:
-            json.dump(group_params, params_file, indent=2, sort_keys=True)
+        with open(path, 'w') as file:
+            json.dump(group_params, file, indent=2, sort_keys=True)

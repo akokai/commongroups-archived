@@ -22,5 +22,14 @@
         </tr>{/items}
       </tbody>
     </table>
+    {?formats}
+    <br>
+    <h4>Other formats</h4>
+    <ul>{#formats}
+      <li><a href="cmgroups.{.}">{.}</a></li>
+      {/formats}
+    </ul>
+    {:else}
+    {/formats}
   </body>
 </html>

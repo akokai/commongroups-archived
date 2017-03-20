@@ -37,7 +37,7 @@ CONFIG = {
             'propagate': False
         },
         'sqlalchemy': {
-            'level': 'DEBUG',
+            'level': 'WARNING',
             'handlers': ['console'],
             'propagate': False
         }
