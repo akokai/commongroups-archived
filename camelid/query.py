@@ -34,13 +34,13 @@ def substructure_query(pattern, mol, fields):
     return que
 
 
-def substruct_exclude_query(pattern, exclude_pattern, mol, fields):
+def substruct_exclude_query(pattern, excludes, mol, fields):
     """
     Construct a query matching one substructure and excluding another.
 
     Parameters:
-        pattern (str): Substructure to match, as SMARTS string.
-        exclude_pattern (str): Substructure to exclude, as SMARTS string.
+        pattern (str): Substructure to match, as a SMARTS string.
+        excludes (iterable): Substructures to exclude, as SMARTS strings.
         mol: SQLAlchemy object representing a column of searchable molecules.
         fields (iterable): SQLAlchemy selctable objects to select from.
 
@@ -48,9 +48,11 @@ def substruct_exclude_query(pattern, exclude_pattern, mol, fields):
         SQLAlchemy :class:`Select` object.
     """
     sub_clause = mol.op('@>')(text(':p ::qmol').bindparams(p=pattern))
-    not_clause = mol.op('@>')(text(':x ::qmol').bindparams(x=exclude_pattern))
-    que = select(fields).where(and_(sub_clause,
-                                    not_(not_clause)))
+    not_clauses = []
+    for pat in excludes:
+        match = mol.op('@>')(text(':x ::qmol').bindparams(x=pat))
+        not_clauses.append(not_(match))
+    que = select(fields).where(and_(sub_clause, *not_clauses))
     return que
 
 

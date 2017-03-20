@@ -67,7 +67,7 @@ def directory(cmgs, env, title='Compound group processing results'):
         'title': title,
         'items': [{'cmg_id': cmg.cmg_id,
                    'name': cmg.name,
-                   'description': cmg.info['description']} for cmg in cmgs]}
+                   'notes': cmg.info['notes']} for cmg in cmgs]}
     path = pjoin(env.results_path, 'index.html')
     templater = AshesEnv([TEMPLATES_DIR])
     html = templater.render('directory.html', context)

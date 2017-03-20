@@ -41,17 +41,17 @@ class CMGroup(object):
 
     Data, output, and logs for each :class:`CMGroup` are managed using an
     associated :class:`camelid.env.CamelidEnv` project environment. See
-    :doc:`design`.
+    :ref:`Design <design>`.
 
     Parameters:
         params (dict): A dictionary containing the parameters of the compound
-            group. See :doc:`params`.
+            group. See :ref:`Parameters <params>`.
         env (:class:`camelid.env.CamelidEnv`): The project environment to use.
-        description (str): Optional textual description of the compound group.
+        notes (str): Optional notes about the compound group.
         info (dict): Optional extra information as key-value pairs. This is
             for loading CMGroup objects from JSON.
     """
-    def __init__(self, params, env, description='', info=None):
+    def __init__(self, params, env, notes='', info=None):
         try:
             assert 'cmg_id' in params
         except (AssertionError, KeyError):
@@ -59,9 +59,9 @@ class CMGroup(object):
             raise
         self._params = BASE_PARAMS.copy()
         self._params.update(params)
-        self.info = info or {'description': ''}
-        if description:
-            self.info.update({'description': description})
+        self.info = info or {'notes': ''}
+        if notes:
+            self.info.update({'notes': notes})
         self.data_path = env.data_path
         self.results_path = env.results_path
         self._compounds = None
@@ -272,4 +272,3 @@ def collect_to_json(cmgs, path):
     cmg_data = [cmg.to_dict() for cmg in cmgs]
     with open(path, 'w') as file:
         json.dump(cmg_data, file)
-

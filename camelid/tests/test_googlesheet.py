@@ -1,15 +1,20 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
+
 """Unit tests for Google Spreadsheet access."""
 
-from os.path import join as pjoin
 from itertools import islice
+import json
+from os.path import join as pjoin
 
 from camelid import googlesheet as gs
 from camelid.env import CamelidEnv
 
-sheet = gs.SheetManager(worksheet='test')
-env = CamelidEnv(project='test')
+env = CamelidEnv('test')
+config = env.read_config('test.json')
 
+sheet = gs.SheetManager(config['title'],
+                        config['worksheet'],
+                        config['key_file'])
 
 def test_get_spreadsheet():
     doc = sheet.get_spreadsheet()
@@ -29,4 +34,4 @@ def test_get_cmgs():
 
 
 def test_params_to_json():
-    sheet.params_to_json(pjoin(env.project_path, 'params.json'))
+    sheet.params_to_json(pjoin(env.results_path, 'params.json'))

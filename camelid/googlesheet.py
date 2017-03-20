@@ -7,26 +7,21 @@ See :ref:`Google Sheets access <googlesetup>` for general information on
 using this functionality.
 """
 
-from __future__ import unicode_literals
-
-import os
-import logging
-import json
 from itertools import islice
+import json
+import logging
+import os
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials as SAC
 
-from camelid import logconf
+from camelid import logconf  # pylint: disable=unused-import
 from camelid.cmgroup import CMGroup, BASE_PARAMS
 from camelid.errors import NoCredentialsError
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 SCOPE = ['https://spreadsheets.google.com/feeds']
-
-TITLE = 'CMG parameters'        # TODO: Make user-specified; assume private.
-DEFAULT_WORKSHEET = 'active'    # TODO: These details are specific to org.
 
 
 class SheetManager(object):
@@ -35,12 +30,10 @@ class SheetManager(object):
 
     Parameters:
         key_file (str): Path to Google service account credentials
-            JSON file. If unspecified, attempts to read the
-            environment variable ``CAMELID_KEYFILE`` for the path.
-        worksheet (str): Title of the *worksheet* to look for CMG parameters
-            within the Google Sheet. If unspecified, uses a default value.
-        title (str): *Title* of the Google Sheet to open. If unspecified, uses
-            a default value.
+            JSON file.
+        title (str): *Title* of the Google Sheet to open.
+        worksheet (str): Title of the *worksheet* containing parameters
+            within the Google Sheet.
 
     Raises:
         :class:`camelid.errors.NoCredentialsError`: If the API
@@ -51,14 +44,8 @@ class SheetManager(object):
         by key or by URL, but that functionality in :mod:`gspread` is broken
         because of the "New Sheets".
     """
-    def __init__(self, title=TITLE, worksheet=None, key_file=None):
-        if key_file:
-            _key_file = os.path.abspath(key_file)
-        elif os.getenv('CAMELID_KEYFILE'):
-            _key_file = os.path.abspath(os.getenv('CAMELID_KEYFILE'))
-        else:
-            raise NoCredentialsError(key_file)
-
+    def __init__(self, title, worksheet, key_file):
+        _key_file = os.path.abspath(key_file)
         try:
             creds = SAC.from_json_keyfile_name(_key_file, SCOPE)
         except FileNotFoundError:
@@ -68,7 +55,7 @@ class SheetManager(object):
         self._google = gspread.authorize(creds)
         self._title = title
         self._spreadsheet = None
-        self._worksheet = worksheet or DEFAULT_WORKSHEET
+        self._worksheet = worksheet
 
     def get_spreadsheet(self):
         """
