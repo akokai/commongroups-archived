@@ -6,7 +6,7 @@ import os
 from commongroups.env import CommonEnv
 
 
-def test_commongroupsenv():
+def test_commonenv():
     env = CommonEnv(project='test')
     assert os.path.exists(env.log_file)
     env.clear_logs()
