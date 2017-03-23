@@ -1,11 +1,11 @@
 # coding: utf-8
 
 """
-Special errors for camelid.
+Special errors for commongroups.
 """
 
 class CamelidError(Exception):
-    """Base Exception for all camelid errors."""
+    """Base Exception for all commongroups errors."""
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 

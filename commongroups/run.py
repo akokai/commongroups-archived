@@ -3,7 +3,7 @@
 """
 Automatically populate chemical & material groups.
 
-This module runs the whole collection of operations available in camelid:
+This module runs the whole collection of operations available in commongroups:
 
 -  Read compound group definitions either from the web (Google Sheets) or
    from a JSON file.
@@ -16,10 +16,10 @@ from __future__ import unicode_literals
 import logging
 import argparse
 
-from camelid import logconf
-from camelid.env import CamelidEnv
+from commongroups import logconf
+from commongroups.env import CommonEnv
 
-logger = logging.getLogger('camelid')
+logger = logging.getLogger('commongroups')
 
 
 def create_parser():
@@ -27,7 +27,7 @@ def create_parser():
     desc = 'Automatically populate chemical & material groups.'
     parser = argparse.ArgumentParser(description=desc)
 
-    parser.add_argument('-e', '--env_path', help='path to camelid home')
+    parser.add_argument('-e', '--env_path', help='path to commongroups home')
     parser.add_argument('-p', '--project', help='project name')
     parser.add_argument('-d', '--database', help='database URL')
     parser.add_argument('-g', '--googlesheet',
@@ -60,7 +60,7 @@ def main():
     args = parser.parse_args()
     set_console_loglevel(args.level)
 
-    env = CamelidEnv(args.env_path, args.project, args.database)
+    env = CommonEnv(args.env_path, args.project, args.database)
     env.run(args)
 
 

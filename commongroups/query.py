@@ -12,7 +12,7 @@ from rdkit import Chem, rdBase
 import sqlalchemy
 from sqlalchemy.sql import select, and_, or_, not_, text
 
-from camelid import logconf  # pylint: disable=unused-import
+from commongroups import logconf  # pylint: disable=unused-import
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 

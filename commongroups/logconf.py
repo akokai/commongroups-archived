@@ -26,7 +26,7 @@ CONFIG = {
         }
     },
     'loggers': {
-        'camelid': {
+        'commongroups': {
             'level': 'DEBUG',
             'handlers': ['console'],
             'propagate': False

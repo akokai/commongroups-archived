@@ -13,10 +13,9 @@ import pandas as pd
 from pandas import DataFrame, ExcelWriter
 # from boltons.jsonutils import JSONLIterator
 
-from camelid import logconf  # pylint: disable=unused-import
-from camelid import pubchemutils as pc
-from camelid.hypertext import cids_to_html
-from camelid.errors import WebServiceError
+from commongroups import logconf  # pylint: disable=unused-import
+from commongroups.hypertext import cids_to_html
+from commongroups.errors import WebServiceError
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -40,11 +39,11 @@ class CMGroup(object):
     own annotations using :func:`add_info`.
 
     Data, output, and logs for each :class:`CMGroup` are managed using an
-    associated :class:`camelid.env.CamelidEnv` project environment. See
-    :ref:`Design <design>`.
+    associated :class:`commongroups.env.CommonEnv` project environment. See
+    :doc:`Design <design>`.
 
     Parameters:
-        env (:class:`camelid.env.CamelidEnv`): The project environment to use.
+        env (:class:`commongroups.env.CommonEnv`): The project environment to use.
         params (dict): A dictionary containing the parameters of the compound
             group. See :ref:`Parameters <params>`.
         info (dict): Optional extra information as key-value pairs.
@@ -244,7 +243,7 @@ def cmgs_from_json(env, path):
     Generate :class:`CMGroup` objects from a JSON file.
 
     Parameters:
-        env (:class:`camelid.env.CamelidEnv`): The project environment. This
+        env (:class:`commongroups.env.CommonEnv`): The project environment. This
             determines the environment used for the :class:`CMGroup` objects.
         path (str): Path to a JSON file containing parameters, and optionally
             other ``info``, for a number of CMGs.
@@ -266,7 +265,7 @@ def collect_to_json(cmgs, env, filename=None):
 
     Parameters:
         cmgs (iterable): The compound group objects to write to JSON.
-        env (:class:`camelid.env.CamelidEnv`): Project environment.
+        env (:class:`commongroups.env.CommonEnv`): Project environment.
         filename (str): Optional alternative filename.
     """
     filename = filename or 'cmgroups.json'

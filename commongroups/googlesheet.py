@@ -15,9 +15,9 @@ import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials as SAC
 
-from camelid import logconf  # pylint: disable=unused-import
-from camelid.cmgroup import CMGroup, BASE_PARAMS
-from camelid.errors import NoCredentialsError
+from commongroups import logconf  # pylint: disable=unused-import
+from commongroups.cmgroup import CMGroup, BASE_PARAMS
+from commongroups.errors import NoCredentialsError
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -36,7 +36,7 @@ class SheetManager(object):
             within the Google Sheet.
 
     Raises:
-        :class:`camelid.errors.NoCredentialsError`: If the API
+        :class:`commongroups.errors.NoCredentialsError`: If the API
             credentials are missing or cannot be parsed from JSON.
 
     Notes:
@@ -97,11 +97,11 @@ class SheetManager(object):
         Generate :class:`CMGroup` objects from parameters in spreadsheet rows.
 
         Parameters:
-            env (:class:`camelid.env.CamelidEnv`): The project environment
+            env (:class:`commongroups.env.CommonEnv`): The project environment
                 that the returned objects will use to store data, etc.
 
         Yields:
-            :class:`camelid.cmgroup.CMGroup`: Based on parameters in each row.
+            :class:`commongroups.cmgroup.CMGroup`: Based on parameters in each row.
 
         """
         logger.debug('Generating CMGs from worksheet: %s', self.worksheet)

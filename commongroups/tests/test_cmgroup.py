@@ -5,8 +5,8 @@ import os
 import shutil
 from itertools import islice
 
-from camelid.env import CamelidEnv
-from camelid import cmgroup as cmg
+from commongroups.env import CommonEnv
+from commongroups import cmgroup as cmg
 
 # Locate the test params to use.
 _CUR_PATH = os.path.abspath(os.path.dirname(__file__))
@@ -14,7 +14,7 @@ PARAMS_JSON = os.path.join(_CUR_PATH, 'params.json')
 PARAMS_LIST = cmg.params_from_json(PARAMS_JSON)
 
 # This creates test environment directories on filesystem as a side effect.
-env = CamelidEnv('test')
+env = CommonEnv('test')
 
 
 # def test_cmgroup():

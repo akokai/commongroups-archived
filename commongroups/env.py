@@ -11,45 +11,44 @@ from os.path import join as pjoin
 
 from boltons.fileutils import mkdir_p
 
-from camelid import logconf  # pylint: disable=unused-import
-from camelid import cmgroup as cmg
-from camelid import googlesheet as gs
+from commongroups import logconf  # pylint: disable=unused-import
+from commongroups import cmgroup as cmg
+from commongroups import googlesheet as gs
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-class CamelidEnv(object):
+class CommonEnv(object):
     """
-    Run environment for :mod:`camelid`. Prefers desert or alpine habitats.
+    Run environment for :mod:`commongroups`.
 
     This object keeps track of a project environment (i.e., file locations
     for data and logs, common parameters) for many instances of
-    :class:`camelid.cmgroup.CMGroup`.
+    :class:`commongroups.cmgroup.CMGroup`.
 
     Instantiating this class creates a directory structure and a log file.
     Namely, a project directory corresponding to ``project_path`` and its
     subdirectories ``results_path``, ``log_path``, ``data_path``. The
     project directory is created within the "home" directory corresponding
-    to ``env_path``. A new log file is created each time a new ``CamelidEnv``
+    to ``env_path``. A new log file is created each time a new ``CommonEnv``
     with the same project name is created.
 
     Parameters:
         name (str): Project name, used to name the project directory.
-        database (str): Database URL for connecting to structure-searchable
-            database.
-        env_path (str): Path to root camelid home. If not specified,
-            looks for environment variable ``CAMELID_HOME`` or defaults to
-            ``~/camelid_data``.
+        env_path (str): Path to root commongroups home. If not specified,
+            looks for environment variable ``CMG_HOME`` or defaults to
+            ``~/commongroups_data``.
     """
     def __init__(self,
                  name='default',
                  env_path=None):
         if env_path:
             self._env_path = os.path.abspath(env_path)
-        elif os.getenv('CAMELID_HOME'):
-            self._env_path = os.path.abspath(os.getenv('CAMELID_HOME'))
+        elif os.getenv('CMG_HOME'):
+            self._env_path = os.path.abspath(os.getenv('CMG_HOME'))
         else:
-            self._env_path = pjoin(os.path.expanduser('~'), 'camelid_data')
+            self._env_path = pjoin(os.path.expanduser('~'),
+                                   'commongroups_data')
 
         self._name = name
         self._project_path = pjoin(self._env_path, name)
@@ -101,10 +100,10 @@ class CamelidEnv(object):
 
     def __repr__(self):
         args = [self._name, self._database, self._env_path]
-        return 'CamelidEnv({})'.format(', '.join(args))
+        return 'CommonEnv({})'.format(', '.join(args))
 
     def __str__(self):
-        return 'CamelidEnv({})'.format(self._name)
+        return 'CommonEnv({})'.format(self._name)
 
     def add_project_handler(self):
         """
@@ -115,7 +114,7 @@ class CamelidEnv(object):
         """
         loggers = list(logconf.CONFIG['loggers'].keys())
         proj_handler = logging.FileHandler(self._log_file, mode='w')
-        fmt = logging.getLogger('camelid').handlers[0].formatter
+        fmt = logging.getLogger('commongroups').handlers[0].formatter
         proj_handler.setFormatter(fmt)
         for item in loggers:
             lgr = logging.getLogger(item)
@@ -144,14 +143,14 @@ class CamelidEnv(object):
         """
         Perform operations specified by the arguments.
 
-        See :ref:`Running camelid <running>` for possible operations.
+        See :ref:`Running commongroups <running>` for possible operations.
 
         Parameters:
             args (dict): Parsed command-line arguments.
 
         Notes:
             The "resume update" option is handled by
-            :func:`camelid.cmgroup.batch_cmg_search`.
+            :func:`commongroups.cmgroup.batch_cmg_search`.
         """
         if args.json_file:
             logger.info('Generating compound groups from JSON file')

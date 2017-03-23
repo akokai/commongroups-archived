@@ -6,11 +6,11 @@ from itertools import islice
 import json
 from os.path import join as pjoin
 
-from camelid.cmgroup import BASE_PARAMS
-from camelid.env import CamelidEnv
-from camelid.googlesheet import SheetManager as GSM
+from commongroups.cmgroup import BASE_PARAMS
+from commongroups.env import CommonEnv
+from commongroups.googlesheet import SheetManager as GSM
 
-env = CamelidEnv('test')
+env = CommonEnv('test')
 config = env.read_config('test.json')
 goog = GSM(config['title'],
            config['worksheet'],

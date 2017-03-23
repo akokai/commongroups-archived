@@ -1,12 +1,12 @@
 # coding: utf-8
 
 from os.path import join as pjoin
-from camelid.env import CamelidEnv
-from camelid.cmgroup import CMGroup as CMG
-from camelid.cmgroup import BASE_PARAMS
-from camelid import hypertext as ht
+from commongroups.env import CommonEnv
+from commongroups.cmgroup import CMGroup as CMG
+from commongroups.cmgroup import BASE_PARAMS
+from commongroups import hypertext as ht
 
-env = CamelidEnv('test')
+env = CommonEnv('test')
 
 # Test directory
 par1 = {'cmg_id': 1, 'name': 'foo_group'}

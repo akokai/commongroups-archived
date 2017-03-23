@@ -23,9 +23,9 @@ from boltons.iterutils import remap
 import requests
 import pubchempy as pcp
 
-from camelid import logconf
-from camelid import casrnutils
-from camelid.errors import WebServiceError
+from commongroups import logconf
+from commongroups import casrnutils
+from commongroups.errors import WebServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -208,7 +208,7 @@ def init_substruct_search(struct, method='smiles'):
         str: The asynchronous ListKey given in the server response.
 
     Raises:
-        :class:`camelid.errors.WebServiceError`: If server response is
+        :class:`commongroups.errors.WebServiceError`: If server response is
             something unexpected, like a gateway timeout.
     """
     search_path = '/compound/substructure/{0}/{1}/JSON'.format(method,
@@ -244,7 +244,7 @@ def retrieve_search_results(listkey, **kwargs):
         list: CIDs returned by the search.
 
     Raises:
-        :class:`camelid.errors.WebServiceError`: If server response is
+        :class:`commongroups.errors.WebServiceError`: If server response is
             something unexpected, like a gateway timeout.
     """
     key_url = PUG_BASE + '/compound/listkey/{0}/cids/JSON'.format(listkey)
