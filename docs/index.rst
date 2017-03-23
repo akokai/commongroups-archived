@@ -1,7 +1,7 @@
-.. camelid documentation master file, created on Wed Aug 10 09:50:29 2016.
+.. commongroups documentation master file, created on Wed Aug 10 09:50:29 2016.
 
-camelid
-=======
+commongroups
+============
 
 Contents
 --------

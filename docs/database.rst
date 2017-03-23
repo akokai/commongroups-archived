@@ -1,21 +1,19 @@
 Instantiating a structure-searchable database
 =============================================
 
-A prerequisite for using ``camelid`` is a database of compounds searchable by
-chemical structure. This is separate from the required software dependencies.
+A prerequisite for using ``commongroups`` is a database of compounds searchable
+by chemical structure. This is separate from the required software dependencies.
 We do not distribute a pre-built database, and there are no requirements for or
 limits on what compounds and data sources might be included in the database.
 
-Nevertheless, we developed and tested ``camelid`` using a database compiled
+Nevertheless, we developed and tested ``commongroups`` using a database compiled
 from public data available in the `US EPA CompTox Dashboard`_, containing
 approximately 700K structures. We believe is a good starting point for most
 users.
 
 What follows is a general description of how such a database can be created
-and prepared for use with ``camelid``. In a future release, there will also be
+and prepared for use with ``commongroups``. In a future release, there will also be
 an installation script to automatically build a database along these lines.
-
-.. _US EPA CompTox Dashboard: https://comptox.epa.gov/dashboard
 
 Suggested data sources
 ----------------------
@@ -93,3 +91,5 @@ Creating the index
 To enable fast SQL queries on the molecular structures, we index the table on
 the column containing ``mol``-type structures, using the RDKit extension.
 This is also a fairly resource-intensive process.
+
+.. _US EPA CompTox Dashboard: https://comptox.epa.gov/dashboard

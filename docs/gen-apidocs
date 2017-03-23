@@ -1,2 +1,2 @@
 #!/bin/bash
-sphinx-apidoc -o apidocs/ ../camelid/ ../camelid/tests/ ../camelid/logconf.py
+sphinx-apidoc -o apidocs/ ../commongroups/ ../commongroups/tests/ ../commongroups/logconf.py

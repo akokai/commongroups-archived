@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# camelid documentation build configuration file, created by
+# commongroups documentation build configuration file, created by
 # sphinx-quickstart on Wed Aug 10 09:50:29 2016.
 #
 # This file is execfile()d with the current directory set to its
@@ -51,7 +51,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'camelid'
+project = 'commongroups'
 copyright = '2016, Akos Kokai, Fred Cauthen, and Michel Dedeo'
 author = 'Akos Kokai, Fred Cauthen, and Michel Dedeo'
 
@@ -129,7 +129,7 @@ html_theme_options = {
 
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
-#html_title = 'camelid v0.1'
+#html_title = 'commongroups v0.1'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None
@@ -211,7 +211,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'cameliddoc'
+htmlhelp_basename = 'commongroupsdoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -233,7 +233,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'camelid.tex', 'camelid Documentation',
+    (master_doc, 'commongroups.tex', 'commongroups Documentation',
      'Akos Kokai, Fred Cauthen, and Michel Dedeo', 'manual'),
 ]
 
@@ -263,7 +263,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'camelid', 'Camelid Documentation',
+    (master_doc, 'commongroups', 'Common Groups Documentation',
      [author], 1)
 ]
 
@@ -277,8 +277,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'camelid', 'Camelid Documentation',
-     author, 'camelid',
+    (master_doc, 'commongroups', 'Common Groups Documentation',
+     author, 'commongroups',
      'Project for meta-organizing chemical and material libraries',
      'Miscellaneous'),
 ]

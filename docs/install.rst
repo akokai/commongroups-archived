@@ -4,7 +4,7 @@ Installation
 Software dependencies
 ~~~~~~~~~~~~~~~~~~~~~
 
-``camelid`` requires Python 3.5 and a number of Python packages, notably
+``commongroups`` requires Python 3.5 and a number of Python packages, notably
 `RDKit`_. It also requires an installation of PostgreSQL with the RDKit
 database extension.
 

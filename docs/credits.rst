@@ -4,7 +4,7 @@ Credits
 This project is part of the `Chemical Hazard Data Commons`_ and supported by
 the `Healthy Building Network`_.
 
-The following people have contributed to `camelid`:
+The following people have contributed to `commongroups`:
 
 -  Akos Kokai (concept, design, and coding)
 -  Michel Dedeo (concept and design)
@@ -12,7 +12,7 @@ The following people have contributed to `camelid`:
 
 With review and guidance from Mahmoud Hashemi and David Faulkner.
 
-``camelid`` would not be possible without `RDKit`_ by Greg Landrum and
+``commongroups`` would not be possible without `RDKit`_ by Greg Landrum and
 colleagues.
 
 The `photo`_ of alpacas in Ecuador is by Philippe Lavoie and is in the public

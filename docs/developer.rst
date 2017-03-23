@@ -4,50 +4,50 @@ Developer reference
 ``cmgroup`` - Chemical/material group
 -------------------------------------
 
-.. automodule:: camelid.cmgroup
+.. automodule:: commongroups.cmgroup
     :members:
     :show-inheritance:
 
 ``googlesheet`` - Google Sheets access
 --------------------------------------
 
-.. automodule:: camelid.googlesheet
+.. automodule:: commongroups.googlesheet
     :members:
     :show-inheritance:
 
  ``hypertext`` - Generating HTML output
  --------------------------------------
 
- .. automodule:: camelid.hypertext
+ .. automodule:: commongroups.hypertext
      :members:
      :show-inheritance:
 
   ``pubchemutils`` - PubChem API functions
   ----------------------------------------
 
-  .. automodule:: camelid.pubchemutils
+  .. automodule:: commongroups.pubchemutils
   :members:
   :show-inheritance:
 
 ``run`` - The run script
 ------------------------
 
-See :doc:`Usage <usage>` and :ref:`Running camelid <running>`.
+See :doc:`Usage <usage>` and :ref:`Running commongroups <running>`.
 
-.. automodule:: camelid.run
+.. automodule:: commongroups.run
     :members:
     :show-inheritance:
 
  ``casrnutils`` - CASRN functions
  --------------------------------
 
- .. automodule:: camelid.casrnutils
+ .. automodule:: commongroups.casrnutils
  :members:
  :show-inheritance:
 
  ``errors`` - Exceptions
  -----------------------
 
- .. automodule:: camelid.errors
+ .. automodule:: commongroups.errors
  :members:
  :show-inheritance:
