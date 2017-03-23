@@ -9,9 +9,9 @@ All files generated when you use commongroups are stored within a "home" environ
 -  The root *commongroups home* directory contains all of the project directories.
    You can specify where this is in a number of ways:
 
-   -  Set an an environment variable ``CMGROUPS_HOME``::
+   -  Set an an environment variable ``CMG_HOME``::
 
-      $ export CMGROUPS_HOME=/path/to/commongroups_home
+      $ export CMG_HOME=/path/to/commongroups_home
 
    -  When running the commongroups script, use the option
       ``-e /path/to/commongroups_home``.
@@ -58,7 +58,7 @@ Setup
 .. _running:
 
 Running commongroups
----------------
+--------------------
 
 **This information is subject to change.** The script can be run from the repository root directory using::
 

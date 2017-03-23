@@ -15,10 +15,6 @@ With review and guidance from Mahmoud Hashemi and David Faulkner.
 ``commongroups`` would not be possible without `RDKit`_ by Greg Landrum and
 colleagues.
 
-The `photo`_ of alpacas in Ecuador is by Philippe Lavoie and is in the public
-domain.
-
 .. _Chemical Hazard Data Commons: https://commons.healthymaterials.net/
 .. _Healthy Building Network: http://www.healthybuilding.net/
 .. _RDKit: http://rdkit.org/
-.. _photo: https://commons.wikimedia.org/wiki/File:Alpacas.JPG

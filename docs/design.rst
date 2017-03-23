@@ -82,7 +82,7 @@ The following parameters are necessary to define a compound group.
 
 -  ``cmg_id``: A unique identifier for the group.
 
--  ``name``: The name of the group, e.g., "Pthalates".
+-  ``name``: The name of the group, e.g., "Phthalates".
 
 In addition to these parameters, compound groups can be further described by additional information, such as notes, descriptions, or search statistics. This information is not used for computational purposes, but exists for interpretation and communication of results.
 

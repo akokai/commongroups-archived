@@ -1,4 +1,4 @@
 Common Groups
 =============
 
-Project for assigning chemical substances to groups with identified environmental health hazards, based on molecular structure.
+Project for molecular structure-based classification of chemical substances into groups with known environmental health hazards.

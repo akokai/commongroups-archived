@@ -1,8 +1,8 @@
 Introduction
 ============
 
-``commongroups`` is a tool for identifying chemical substances that belong to
-structurally defined groups.
+**Common Groups** is a project for molecular structure-based classification of
+chemical substances into groups with known environmental health hazards.
 
 *This is a work in progress and is not yet stable or viable for general use.*
 
@@ -17,26 +17,28 @@ lists.  However, determining the set of specific chemicals that might belong to
 each group is usually left up to someone else.
 
 The goal of this project is to provide methods to identify arbitrary sets of
-chemicals belonging to classes that are *defined by structure.* We aim to apply
-basic cheminformatics techniques to:
+chemicals belonging to structurally-defined classes. We aim to apply basic
+cheminformatics techniques to:
 
--  Find all molecular structures within a larger set (i.e., database) that
-   belong to a given class.
+-  Find all substances within a larger set (i.e., database) that belong to a
+   given group.
 
--  Screen individual molecular structures for membership in a given group.
+-  Classify individual substances into the correct group(s).
 
--  Do each of these things automatically for a large number of groups all at
+-  Perform these functions automatically for a large number of groups all at
    once.
 
 We imagine the possible uses of the project to include answering questions
-like: *What dithiocarbamates are in this list of compounds?* or *Does this new compound belong to any chemical groups associated with endocrine disruption?*
+like: *What dithiocarbamates are in this list of compounds?* or *Does this new
+compound belong to any chemical groups associated with endocrine disruption?*
 
 
 Frequently asked questions
 --------------------------
 
 **Does this tool use structural similarity searching?** No, it uses highly
-specific substructure searching using `SMARTS`_ and SQL. The idea is that the groups of chemicals we want to identify are defined by precise criteria, rather
+specific substructure searching using `SMARTS`_ and SQL. The idea is that the
+groups of chemicals we want to identify are defined by precise criteria, rather
 than inferred by similarity. We see this approach as complementary to
 similarity searching methods, with each approach having different advantages.
 
