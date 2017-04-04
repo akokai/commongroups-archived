@@ -64,8 +64,8 @@ def cids_to_html(cids, path, title='PubChem images', info=None, size=500):
                          for cid in cids]}
     templater = AshesEnv([TEMPLATES_DIR])
     html = templater.render('display_cids.html', context)
-    with open(path, 'w') as file:
-        file.write(html)
+    with open(path, 'w') as html_file:
+        html_file.write(html)
 
 
 def results_to_html(cmg):
@@ -98,5 +98,5 @@ def directory(cmgs, env, title=DIR_TITLE, formats=None):
     path = pjoin(env.results_path, 'index.html')
     templater = AshesEnv([TEMPLATES_DIR])
     html = templater.render('directory.html', context)
-    with open(path, 'w') as file:
-        file.write(html)
+    with open(path, 'w') as html_file:
+        html_file.write(html)

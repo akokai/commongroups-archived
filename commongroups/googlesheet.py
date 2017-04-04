@@ -120,5 +120,5 @@ class SheetManager(object):
 
         file_path = os.path.abspath(path)
         logger.debug('Writing parameters to file: %s', file_path)
-        with open(path, 'w') as file:
-            json.dump(group_params, file, indent=2, sort_keys=True)
+        with open(path, 'w') as json_file:
+            json.dump(group_params, json_file, indent=2, sort_keys=True)

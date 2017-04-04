@@ -121,8 +121,8 @@ class CMGroup(object):
         """Serialize CMGroup parameters and info as JSON."""
         if not path:
             path = pjoin(self.data_path, '{}.json'.format(self.cmg_id))
-        with open(path, 'w') as file:
-            json.dump(self.to_dict(), file, indent=2, sort_keys=True)
+        with open(path, 'w') as json_file:
+            json.dump(self.to_dict(), json_file, indent=2, sort_keys=True)
 
     def compounds_to_pkl(self, pkl_path=None):
         """Serialize DataFrame of compounds to a binary file."""
@@ -232,8 +232,8 @@ def params_from_json(path):
     Returns:
         A container, usually a list of dicts.
     """
-    with open(path, 'r') as file:
-        params_list = json.load(file)
+    with open(path, 'r') as json_file:
+        params_list = json.load(json_file)
     return params_list
 
 
@@ -271,5 +271,5 @@ def collect_to_json(cmgs, env, filename=None):
     filename = filename or 'cmgroups.json'
     path = pjoin(env.results_path, filename)
     cmg_data = [cmg.to_dict() for cmg in cmgs]
-    with open(path, 'w') as file:
-        json.dump(cmg_data, file, indent=2, sort_keys=True)
+    with open(path, 'w') as json_file:
+        json.dump(cmg_data, json_file, indent=2, sort_keys=True)

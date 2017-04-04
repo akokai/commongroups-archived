@@ -99,7 +99,7 @@ class CommonEnv(object):
         return self._results_path
 
     def __repr__(self):
-        args = [self._name, self._database, self._env_path]
+        args = [self._name, self._env_path]
         return 'CommonEnv({})'.format(', '.join(args))
 
     def __str__(self):
@@ -120,13 +120,7 @@ class CommonEnv(object):
             lgr = logging.getLogger(item)
             lgr.addHandler(proj_handler)
 
-    def read_config(self, config_path=None):
-        """
-        Load, and return, user-configured operating parameters.
-
-        Parameters:
-            config_path: Optional; path to an alternative JSON file.
-        """
+    def _get_config_path(self, config_path=None):
         if config_path:
             in_proj = pjoin(self._env_path, config_path)
             if os.path.exists(in_proj):
@@ -135,9 +129,31 @@ class CommonEnv(object):
                 config_path = os.path.abspath(config_path)
         else:
             config_path = pjoin(self._env_path, 'config.json')
+        return config_path
+
+    def read_config(self, config_path=None):
+        """
+        Load and return user-configured operating parameters as a dict.
+
+        Parameters:
+            config_path: Optional; path to an alternative JSON file.
+        """
+        config_path = self._get_config_path(config_path)
         with open(config_path, 'r') as config_file:
             config = json.load(config_file)
         return config
+
+    def write_config(self, config_data, config_path=None):
+        """
+        Rewrite the user-configured operating parameters file.
+
+        Parameters:
+            config_data (dict): New parameters to replace existing ones.
+            config_path: Optional; path to an alternative JSON file.
+        """
+        config_path = self._get_config_path(config_path)
+        with open(config_path, 'w') as config_file:
+            json.dump(config_data, config_file, indent=2, sort_keys=True)
 
     def run(self, args):  # TODO: Update!
         """
