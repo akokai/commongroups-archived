@@ -18,6 +18,22 @@ from commongroups import googlesheet as gs
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
+def add_project_handler(log_file):
+    """
+    Add a project-specific :class:`FileHandler` for all logging output.
+
+    This enables logging to a file that's kept within the project
+    directory.
+    """
+    loggers = list(logconf.CONFIG['loggers'].keys())
+    proj_handler = logging.FileHandler(log_file, mode='w')
+    fmt = logging.getLogger('commongroups').handlers[0].formatter
+    proj_handler.setFormatter(fmt)
+    for item in loggers:
+        lgr = logging.getLogger(item)
+        lgr.addHandler(proj_handler)
+
+
 class CommonEnv(object):
     """
     Run environment for :mod:`commongroups`.
@@ -56,11 +72,11 @@ class CommonEnv(object):
 
         # Set up per-project logging to file.
         self._log_path = pjoin(self._project_path, 'log')
-        mkdir_p(self._log_path)
-        log_file = datetime.now().strftime('%Y%m%dT%H%M%S') + '.log'
-        self._log_file = pjoin(self._log_path, log_file)
-        self.add_project_handler()
-        logger.info('Project path: %s', self._project_path)
+        log_path = pjoin(self._project_path, 'log')
+        mkdir_p(log_path)
+        log_file = pjoin(log_path,
+                         datetime.now().strftime('%Y%m%dT%H%M%S') + '.log')
+        add_project_handler(log_file)
 
         # Set up data and results directories.
         self._data_path = pjoin(self._project_path, 'data')
@@ -68,6 +84,14 @@ class CommonEnv(object):
         self._results_path = pjoin(self._project_path, 'results')
         mkdir_p(self._results_path)
 
+        # Log where the directories & files have been created.
+        logger.info('Project path: %s', self._project_path)
+
+        # Configuation parameters do not exist until loaded.
+        self.config = None
+
+    # The following attributes are read-only because changing them would
+    # result in inconsitencies with file paths.
     @property
     def name(self):
         """Project name."""
@@ -78,15 +102,15 @@ class CommonEnv(object):
         """Path to project directory."""
         return self._project_path
 
-    @property
-    def log_path(self):
-        """Path to project log directory."""
-        return self._log_path
+    # @property
+    # def log_path(self):
+    #     """Path to project log directory."""
+    #     return self._log_path
 
-    @property
-    def log_file(self):
-        """Path to the currently active log file."""
-        return self._log_file
+    # @property
+    # def log_file(self):
+    #     """Path to the currently active log file."""
+    #     return self._log_file
 
     @property
     def data_path(self):
@@ -104,21 +128,6 @@ class CommonEnv(object):
 
     def __str__(self):
         return 'CommonEnv({})'.format(self._name)
-
-    def add_project_handler(self):
-        """
-        Add a project-specific :class:`FileHandler` for all logging output.
-
-        This enables logging to a file that's kept within the project
-        directory.
-        """
-        loggers = list(logconf.CONFIG['loggers'].keys())
-        proj_handler = logging.FileHandler(self._log_file, mode='w')
-        fmt = logging.getLogger('commongroups').handlers[0].formatter
-        proj_handler.setFormatter(fmt)
-        for item in loggers:
-            lgr = logging.getLogger(item)
-            lgr.addHandler(proj_handler)
 
     def _get_config_path(self, config_path=None):
         if config_path:
@@ -141,6 +150,7 @@ class CommonEnv(object):
         config_path = self._get_config_path(config_path)
         with open(config_path, 'r') as config_file:
             config = json.load(config_file)
+        logger.debug('Read config file: %s', config_path)
         return config
 
     def write_config(self, config_data, config_path=None):
@@ -154,6 +164,11 @@ class CommonEnv(object):
         config_path = self._get_config_path(config_path)
         with open(config_path, 'w') as config_file:
             json.dump(config_data, config_file, indent=2, sort_keys=True)
+
+    def get_config(self):
+        if not self.config:
+            self.config = self.read_config()
+        return self.config
 
     def run(self, args):  # TODO: Update!
         """

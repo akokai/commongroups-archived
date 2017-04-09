@@ -69,20 +69,25 @@ The following parameters are necessary to define a compound group.
 **This is subject to change.**
 
 -  ``method``: The search method for identifying compounds in the group.
-   Currently this can be either 'substructure' for simple substructure matching
-   or 'function' for more complex SQL queries involving comparison against
-   multiple substructures.
+   Currently this is limited to ``sql``.
 
--  ``structure``: The structure used as input to the search method.
-
--  ``structure_type``: How the structure is notated, e.g., SMILES or SMARTS.
-
--  ``function``: The specific function used as the search method (if it is not
-   a simple substructure search).
+   .. Currently this can be either 'substructure' for simple substructure matching
+   .. or 'function' for more complex SQL queries involving comparison against
+   .. multiple substructures.
 
 -  ``cmg_id``: A unique identifier for the group.
 
 -  ``name``: The name of the group, e.g., "Phthalates".
+
+-  ``query``: The ``where`` clause of a SQL query for retrieving substances
+   that match the compound group definition.
+
+.. -  ``structure``: The structure used as input to the search method.
+
+.. -  ``structure_type``: How the structure is notated, e.g., SMILES or SMARTS.
+
+.. -  ``function``: The specific function used as the search method (if it is not
+..    a simple substructure search).
 
 In addition to these parameters, compound groups can be further described by additional information, such as notes, descriptions, or search statistics. This information is not used for computational purposes, but exists for interpretation and communication of results.
 

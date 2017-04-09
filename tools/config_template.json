@@ -1,0 +1,7 @@
+{
+  "data_sources_path": "/path/to/database-data-sources",
+  "database_url": "postgresql://user@localhost/database",
+  "google_key_file": "/path/to/google-credentials-keyfile.json",
+  "google_sheet_title": "Compound group parameters",
+  "google_sheet_worksheet": "active"
+}
